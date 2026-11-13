@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Au p'tit pédago · Suivi des apprentis</title>
+<meta name="theme-color" content="#13294b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#1f2a37;--mut:#6b7280;--bg:#f4f1ec;--card:#fff;--line:#e5e0d8;--navy:#13294b;--navy2:#1f3d6b;--navy3:#2f5590;--brick:#b5452b;--green:#2e8b57;--orange:#e07b1a;--red:#c0392b;--blue:#1f5fa8;--soft:#eef3fb}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.4}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--navy2)}
+#app{display:flex;min-height:100vh}
+aside{width:250px;flex-shrink:0;background:var(--navy);color:#e8eef5;padding:20px 16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:auto}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.logo .m{width:42px;height:42px;border-radius:11px;background:var(--brick);display:grid;place-items:center;flex-shrink:0}
+.logo b{font-size:17px;display:block}.logo span{font-size:12px;color:#9fb0c2}
+.sel{background:var(--navy2);border:1px solid var(--navy3);border-radius:12px;padding:9px 11px;margin-bottom:12px;position:relative;cursor:pointer}
+.sel .cur{display:flex;align-items:center;gap:10px;color:#fff;font-weight:600;font-size:14.5px}
+.sel .cur small{display:block;font-weight:400;color:#9fb6d6;font-size:11.5px}
+.sel .chev{margin-left:auto;color:#9fb6d6}
+.dd{position:absolute;left:0;right:-40px;top:calc(100% + 6px);background:#fff;color:var(--ink);border-radius:12px;box-shadow:0 12px 30px #0006;padding:8px;z-index:50;max-height:70vh;overflow:auto}
+.dd .h{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--mut);padding:8px 10px 4px;text-transform:uppercase}
+.dd .it{padding:8px 10px;border-radius:8px;font-size:14px;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+.dd .it:hover{background:#f3f0ea}
+.dd .it.on{background:var(--soft);font-weight:700}
+.dd .it span{color:var(--mut);font-size:12px}
+.dd .add{margin-top:6px;border-top:1px solid var(--line);padding-top:10px;color:var(--brick);font-weight:700}
+nav a{display:flex;gap:11px;align-items:center;padding:10px 12px;border-radius:10px;color:#cfd9e4;text-decoration:none;font-size:14.5px;cursor:pointer}
+nav a:hover{background:#1b3459}
+nav a.on{background:var(--navy2);color:#fff;font-weight:600}
+nav a .ic{width:22px;text-align:center}
+nav a.off{opacity:.45;pointer-events:none}
+.side-foot{margin-top:auto;background:var(--navy2);border-radius:12px;padding:12px;font-size:12.5px;color:#cfd9e4}
+.side-foot b{color:#fff;display:block;margin-bottom:3px}
+.side-foot .row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.sbtn{background:var(--navy3);color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer}
+main{flex:1;padding:24px 30px;min-width:0}
+.topbar{display:none}
+h1{font-size:24px}h2{font-size:19px;margin-bottom:6px}h3{font-size:16px;margin-bottom:6px}
+.sub{color:var(--mut);font-size:14px;margin-top:3px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1.45fr 1fr;gap:16px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:9px;font-weight:600;font-size:14px;border:1px solid var(--line);background:#fff;cursor:pointer;text-decoration:none;color:var(--ink)}
+.btn:hover{filter:brightness(.97)}
+.btn.p{background:var(--brick);color:#fff;border-color:var(--brick)}
+.btn.n{background:var(--navy2);color:#fff;border-color:var(--navy2)}
+.btn.g{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.s{padding:6px 11px;font-size:13px}
+.btn.danger{color:var(--red);border-color:#f1b7ae}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;font-size:12.5px;padding:4px 10px;border-radius:20px;background:#f1ece4;font-weight:600;margin:2px 4px 2px 0}
+.tag.v{background:#e7f0fb;color:#1f4f8a}.tag.e{background:#fdf1e3;color:#a35a0c}
+.next{border-left:6px solid var(--brick)}
+.next h2{font-size:26px;margin:2px 0}.next h2 small{font-size:15px;color:var(--mut);font-weight:500}
+.dg{border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin-top:10px}
+.dgh{font-size:12.5px;font-weight:800;color:var(--navy2);margin-bottom:8px}
+.dgh small{font-weight:500;color:var(--mut);margin-left:6px}
+.syn{background:#f2f8f4;border-color:#bfe0cb}.syn .dgh{color:#2e7d4f}
+.frm{background:#f6f4f0}
+.docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.doc{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13.5px;display:flex;gap:9px;align-items:center;background:#fff;text-decoration:none;color:var(--ink)}
+.doc i{font-style:normal;font-size:19px}.doc span{color:var(--mut);font-size:12px;display:block}
+.empty{color:var(--mut);font-size:13.5px;padding:6px 0}
+.alert{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:11px;margin-top:9px;font-size:14px}
+.alert b{display:block}.alert .t{color:var(--mut);font-size:12.5px}
+.a-r{background:#fbe9e7;border:1px solid #f1b7ae}.a-o{background:#fdf1e3;border:1px solid #f3cf9f}.a-b{background:var(--soft);border:1px solid #c9d6ec}
+.timeline{display:flex;gap:6px;flex-wrap:wrap}
+.chip{min-width:58px;border-radius:8px;overflow:hidden;border:1px solid var(--line);font-size:11px;text-align:center;background:#fff}
+.chip .n{font-weight:800;padding:3px 4px;background:#f3f0ea}
+.chip .hv{display:flex}.chip .hv div{flex:1;padding:3px 2px;font-weight:700}
+.st-ok{background:var(--green);color:#fff}.st-wait{background:#f6c58f;color:#6b3a07}.st-todo{background:#ece7de;color:#8a8276}.st-cur{outline:3px solid #f3c7bb}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;background:#faf8f4}
+td.c,th.c{text-align:center}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+input[type=text],input[type=number],input[type=date],input[type=password],input[type=url],select,textarea{border:1px solid #d6cfc3;border-radius:8px;padding:8px 10px;background:#fff;width:100%}
+input.sc{width:64px;text-align:center;padding:6px}
+textarea{min-height:90px}
+label.f{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+.hint{font-size:12.5px;color:var(--mut);margin-top:3px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:12px;white-space:nowrap}
+.s0{background:#ece7de;color:#7a7266}.s1{background:#e7f0fb;color:#1f4f8a}.s2{background:#fdf1e3;color:#a35a0c}.s3{background:#e3f3ea;color:#1f6b42}
+.q{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid currentColor;flex-shrink:0}.q0{background:none}.q1{background:conic-gradient(currentColor 0 25%,transparent 0)}.q2{background:conic-gradient(currentColor 0 50%,transparent 0)}.q3{background:currentColor}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.bar{height:8px;background:#eee;border-radius:5px;overflow:hidden;min-width:60px}.bar i{display:block;height:100%}
+.studs{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:10px}
+.stc{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:13px;cursor:pointer;background:#fff}
+.stc:hover{border-color:var(--navy3)}
+.av{width:38px;height:38px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;color:#fff;font-weight:700;background:var(--blue)}
+.cbx{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:14px}
+.cbx input{margin-top:3px;width:auto}
+.ok-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:300;box-shadow:0 6px 20px #0004}
+.modal-bg{position:fixed;inset:0;background:#0007;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:40px 14px;overflow:auto}
+.modal{background:#fff;border-radius:16px;padding:20px;max-width:720px;width:100%}
+.modal h2{margin-bottom:10px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+.lock{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:16px}
+.lock .box{background:#fff;border-radius:18px;padding:26px;max-width:420px;width:100%}
+.consigne{background:var(--soft);border:1px solid #c9d6ec;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
+.ex{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:#fcfbf9}
+.cgrid td{text-align:center;font-weight:700;font-size:12.5px}
+.cV{background:#e7f0fb;color:#1f4f8a}.cE{background:#fdf1e3;color:#a35a0c}.cVE{background:#e3f3ea;color:#1f6b42}
+.legend{font-size:12.5px;color:var(--mut);margin-top:8px}
+.only-print{display:none}
+@media (max-width:980px){
+ .grid2{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+ #app{display:block}
+ aside{position:fixed;left:0;top:0;bottom:0;z-index:100;transform:translateX(-105%);transition:.2s;height:100%}
+ aside.open{transform:none;box-shadow:0 0 40px #0008}
+ .topbar{display:flex;align-items:center;gap:12px;background:var(--navy);color:#fff;padding:10px 14px;position:sticky;top:0;z-index:90}
+ .topbar button{background:var(--navy2);color:#fff;border:0;border-radius:8px;padding:7px 11px;font-size:18px}
+ main{padding:16px}
+ h1{font-size:20px}
+}
+@media print{
+ aside,.topbar,.noprint,.btn{display:none!important}
+ main{padding:0}
+ body{background:#fff}
+ .card{border:1px solid #ccc;break-inside:avoid}
+ .only-print{display:block}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+/* ===================== Référentiel ===================== */
+const REF = {
+ MIS:{nom:"CAP Monteur en installations sanitaires", comps:[
+  ["C1.1","Compléter et transmettre des documents",1],
+  ["C1.2","Échanger et rendre compte oralement",1],
+  ["C2.1","Décoder un dossier technique d'installation sanitaire",1],
+  ["C2.2","Choisir les matériels et les outillages",1],
+  ["C2.3","Déterminer les fournitures nécessaires à la réalisation",1],
+  ["C3.1","Organiser son intervention",1],
+  ["C3.2","Sécuriser son intervention",0],
+  ["C3.3","Réceptionner les approvisionnements",0],
+  ["C3.4","Équiper les appareils",0],
+  ["C3.5","Implanter l'installation sanitaire",0],
+  ["C3.6","Installer les supports et les appareils",0],
+  ["C3.7","Assembler et raccorder les réseaux",0],
+  ["C4.1","Contrôler le travail réalisé",1],
+  ["C4.2","Réaliser une mise en service",0],
+  ["C4.3","Appliquer une procédure de maintenance préventive",0],
+  ["C4.4","Effectuer une opération de maintenance corrective",0]]}
+};
+const METIERS = {MIS:{label:"MIS",color:"#1f5fa8"}};
+const DOC_TYPES = {support:"Supports pédagogiques",synthese:"Fiches synthèse",formateur:"Formateur"};
+const DOC_ICONS = {"Dossier apprenant":"📘","Ressources":"📎","Planches":"🗺️","Maquette":"🧱","Visite virtuelle":"🥽","Évaluation":"✏️","Fiche synthèse":"🧩","Corrigé":"🔒","Autre":"📄"};
+const EVAL_TYPES = {diagnostique:"Diagnostique (positionnement, non notée)",formative:"Formative (fait progresser, non notée)",sommative:"Sommative (compte dans la note)"};
+const STATE_LBL = ["Pas vue","Vue","En cours","Acquise"];
+const STATE_ICO = [0,1,2,3].map(i=>`<i class="q q${i}"></i>`);
+
+/* ===================== Stockage ===================== */
+const KEY="aupp_suivi_v1", SEC="aupp_suivi_sec";
+let D = load();
+function blank(){return {version:1,settings:{seuil:75,nbEvals:3,pointEvery:4,avisUrl:""},groups:[],seances:[],evals:[],log:[],updated:null}}
+function load(){try{const s=localStorage.getItem(KEY);if(s){const d=JSON.parse(s);return Object.assign(blank(),d)}}catch(e){}return blank()}
+let saveTimer=null;
+function save(msg){D.updated=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast("Enregistrement impossible sur cet appareil")}
+ if(fileHandle){clearTimeout(saveTimer);saveTimer=setTimeout(writeLinkedFile,600)}
+ if(msg)toast(msg)}
+function sec(){try{return JSON.parse(localStorage.getItem(SEC)||"{}")}catch(e){return {}}}
+function setSec(o){localStorage.setItem(SEC,JSON.stringify(o))}
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const h=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-FR"):"";
+const pct=x=>Math.round(x*100);
+
+/* ===================== Fichier lié (PC) ===================== */
+let fileHandle=null;
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("aupp_suivi",1);r.onupgradeneeded=()=>r.result.createObjectStore("h");r.onsuccess=()=>res(r.result);r.onerror=rej})}
+async function idbSet(k,v){const db=await idb();return new Promise(r=>{const t=db.transaction("h","readwrite");t.objectStore("h").put(v,k);t.oncomplete=r})}
+async function idbGet(k){const db=await idb();return new Promise(r=>{const t=db.transaction("h");const q=t.objectStore("h").get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}
+async function writeLinkedFile(){if(!fileHandle)return;try{const w=await fileHandle.createWritable();await w.write(JSON.stringify(D,null,1));await w.close();S.fileOk=true}catch(e){S.fileOk=false}renderSideFoot()}
+async function linkFile(){
+ if(!window.showSaveFilePicker){alert("Cet appareil ne permet pas de lier un fichier. Utilisez « Sauvegarder dans un fichier » puis rangez-le dans votre OneDrive.");return}
+ try{fileHandle=await showSaveFilePicker({suggestedName:"Suivi_apprentis.json",types:[{description:"Données du suivi",accept:{"application/json":[".json"]}}]});await idbSet("file",fileHandle);await writeLinkedFile();toast("Fichier lié : chaque modification y est enregistrée")}catch(e){}
+}
+async function openLinkedFile(){
+ if(!window.showOpenFilePicker){importFile();return}
+ try{const [hd]=await showOpenFilePicker({types:[{description:"Données du suivi",accept:{"application/json":[".json"]}}]});const f=await hd.getFile();const d=JSON.parse(await f.text());if(!d.groups)throw 0;if(!confirm("Remplacer les données de cet appareil par celles du fichier ?"))return;D=Object.assign(blank(),d);fileHandle=hd;await idbSet("file",hd);save("Fichier ouvert et lié");go("accueil")}catch(e){}
+}
+async function reconnectFile(){const hd=await idbGet("file");if(!hd)return false;try{if(await hd.requestPermission({mode:"readwrite"})==="granted"){fileHandle=hd;const f=await hd.getFile();const d=JSON.parse(await f.text());if(d.updated&&(!D.updated||d.updated>D.updated)){D=Object.assign(blank(),d);localStorage.setItem(KEY,JSON.stringify(D))}return true}}catch(e){}return false}
+function exportFile(){const b=new Blob([JSON.stringify(D,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Suivi_apprentis_"+today()+".json";a.click();toast("Fichier téléchargé : rangez-le dans votre OneDrive")}
+function importFile(){const i=document.createElement("input");i.type="file";i.accept=".json,application/json";i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!d.groups)throw 0;if(!confirm("Remplacer les données de cet appareil par celles du fichier ?"))return;D=Object.assign(blank(),d);save("Données chargées");go("accueil")}catch(e){alert("Ce fichier n'est pas un fichier de suivi valide.")}};i.click()}
+
+/* ===================== Sécurité ===================== */
+async function hash(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("aupp:"+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+let ROLE=null; // "admin" | "remp"
+const isAdmin=()=>ROLE==="admin";
+let idleT=null;function bumpIdle(){clearTimeout(idleT);idleT=setTimeout(()=>{if(ROLE){ROLE=null;renderLock()}},20*60*1000)}
+["click","keydown","touchstart"].forEach(e=>document.addEventListener(e,bumpIdle,{passive:true}));
+
+function renderLock(){
+ const s=sec();const root=document.getElementById("root");
+ if(!s.admin){
+  root.innerHTML=`<div class="lock"><div class="box">
+  <div class="logo" style="color:var(--ink)"><div class="m">${houseSvg()}</div><div><b>Au p'tit pédago</b><span style="color:var(--mut)">Suivi des apprentis</span></div></div>
+  <h2>Bienvenue</h2><p class="sub" style="margin-bottom:10px">Créez votre code administrateur. Il ouvre l'outil et donne accès à tous les réglages.</p>
+  <div class="consigne">8 caractères minimum, avec des lettres <b>et</b> des chiffres (exemple : Brique56). Notez-le : il ne peut pas être récupéré.</div>
+  <label class="f">Code administrateur</label><input type="password" id="c1" autocomplete="new-password">
+  <label class="f">Retapez le code</label><input type="password" id="c2" autocomplete="new-password">
+  <p id="err" class="hint" style="color:var(--red)"></p>
+  <div class="row" style="margin-top:14px"><button class="btn p" id="go">Créer mon code</button></div></div></div>`;
+  document.getElementById("go").onclick=async()=>{const a=document.getElementById("c1").value,b=document.getElementById("c2").value,err=document.getElementById("err");
+   if(a.length<8||!/[a-zA-Z]/.test(a)||!/\d/.test(a)){err.textContent="Le code doit faire 8 caractères minimum, avec des lettres et des chiffres.";return}
+   if(a!==b){err.textContent="Les deux codes ne sont pas identiques.";return}
+   setSec({admin:await hash(a)});ROLE="admin";start()};
+  return}
+ const wait=(s.lockUntil||0)-Date.now();
+ root.innerHTML=`<div class="lock"><div class="box">
+  <div class="logo" style="color:var(--ink)"><div class="m">${houseSvg()}</div><div><b>Au p'tit pédago</b><span style="color:var(--mut)">Suivi des apprentis</span></div></div>
+  <h2>Ouvrir l'outil</h2><p class="sub" style="margin-bottom:10px">Tapez votre code administrateur, ou le code remplaçant (6 chiffres).</p>
+  <input type="password" id="c1" autocomplete="current-password" ${wait>0?"disabled":""}>
+  <p id="err" class="hint" style="color:var(--red)">${wait>0?`Trop d'essais. Réessayez dans ${Math.ceil(wait/60000)} min.`:""}</p>
+  <div class="row" style="margin-top:14px"><button class="btn p" id="go" ${wait>0?"disabled":""}>Ouvrir</button></div></div></div>`;
+ const c1=document.getElementById('c1');const tryIt=async()=>{const v=c1.value;const hv=await hash(v);const s=sec();
+  if(hv===s.admin)ROLE="admin";else if(s.remp&&hv===s.remp)ROLE="remp";
+  if(ROLE){s.fails=0;setSec(s);start();return}
+  s.fails=(s.fails||0)+1;if(s.fails>=5){s.lockUntil=Date.now()+3*60*1000;s.fails=0}setSec(s);renderLock()};
+ document.getElementById("go").onclick=tryIt;c1&&c1.addEventListener("keydown",e=>{if(e.key==="Enter")tryIt()});setTimeout(()=>{const x=document.getElementById('c1');x&&x.focus()},50);
+}
+function houseSvg(){return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>`}
+
+/* ===================== Accès aux données ===================== */
+const S={view:"accueil",gid:null,param:null,ddOpen:false,fileOk:null};
+const G=id=>D.groups.find(g=>g.id===id);
+const cur=()=>G(S.gid);
+function memberGroups(g){return g.kind==="division"?(g.members||[]).map(G).filter(Boolean):[g]}
+function studentsOf(g,all){let st=[];memberGroups(g).forEach(m=>(m.students||[]).forEach(s=>st.push(Object.assign({grp:m.id,metier:m.metier},s))));return all?st:st.filter(s=>s.actif!==false)}
+function groupsOfStudent(st){const own=D.groups.find(g=>(g.students||[]).some(s=>s.id===st.id));if(!own)return [];return [own,...D.groups.filter(g=>g.kind==="division"&&(g.members||[]).includes(own.id))]}
+function findStudent(id){for(const g of D.groups)for(const s of g.students||[])if(s.id===id)return Object.assign({grp:g.id,metier:g.metier},s);return null}
+function related(g){if(g.kind==="division")return [g,...memberGroups(g)];return [g,...D.groups.filter(x=>x.kind==="division"&&(x.members||[]).includes(g.id))]}
+function compList(g){const m=g.kind==="division"?(memberGroups(g)[0]||{}).metier||"MIS":g.metier||"MIS";return (REF[m]||REF.MIS).comps}
+function compName(code){for(const k in REF){const c=REF[k].comps.find(c=>c[0]===code);if(c)return c[1]}return code}
+function seancesOf(g){return D.seances.filter(s=>s.gid===g.id).sort((a,b)=>a.ordre-b.ordre)}
+function evalsOf(g){return D.evals.filter(e=>e.gid===g.id).sort((a,b)=>(a.date||"9")<(b.date||"9")?-1:1)}
+const byDate=(a,b)=>(a.date||"9")<(b.date||"9")?-1:1;
+function seanceCode(s){return "S-"+String(s.num).padStart(2,"0")+"-"+(s.part==="S"?"S":"D")}
+function stageOf(g,date){const cal=(g.calendar&&g.calendar.length?g.calendar:(memberGroups(g)[0]||{}).calendar)||[];let n=0;cal.forEach((c,i)=>{if(c.debut&&c.debut<=date)n=i+1});return n}
+function hasCal(g){return ((g.calendar&&g.calendar.length?g.calendar:(memberGroups(g)[0]||{}).calendar)||[]).length>0}
+
+/* ===================== Calculs ===================== */
+function evalStudentPct(e,sid){ // {note20, comps:{code:pct}, total}
+ const r=(e.res||{})[sid];if(!r||r.absent)return null;let tot=0,got=0,comps={},any=false;
+ e.ex.forEach(x=>{const v=r.sc?r.sc[x.id]:undefined;if(v===undefined||v===""||v===null)return;any=true;const val=Math.max(0,Math.min(+v,x.bareme));tot+=x.bareme;got+=val;
+  (x.comps||[]).forEach(c=>{comps[c]=comps[c]||[0,0];comps[c][0]+=val;comps[c][1]+=x.bareme})});
+ if(!any)return null;const cp={};for(const c in comps)cp[c]=comps[c][1]?comps[c][0]/comps[c][1]:0;
+ return {note20:tot?got/tot*20:0,comps:cp,complete:e.ex.every(x=>r.sc&&r.sc[x.id]!==undefined&&r.sc[x.id]!=="")}
+}
+function studentEvalPoints(st){ // liste des résultats pris en compte
+ const gs=groupsOfStudent(st).map(g=>g.id);const evs=D.evals.filter(e=>gs.includes(e.gid)&&e.statut==="corrigee");
+ const out=[];const remByOrig={};
+ evs.filter(e=>e.remOf).forEach(e=>{const p=evalStudentPct(e,st.id);if(p)(remByOrig[e.remOf]=remByOrig[e.remOf]||[]).push({e,p})});
+ evs.filter(e=>!e.remOf).forEach(e=>{const r=(e.res||{})[st.id];let p=evalStudentPct(e,st.id);let from=e;const rems=remByOrig[e.id]||[];
+  if(r&&r.absent&&r.abs==="annule")return;
+  rems.forEach(x=>{if(!p||x.p.note20>p.note20){p=x.p;from=x.e}});
+  if(!p)return;out.push({e,from,p,date:from.date||e.date,stage:stageOf(G(e.gid),from.date||e.date||today())})});
+ return out}
+function compStates(st,g){
+ const set=D.settings;const pts=studentEvalPoints(st);const res={};
+ const list=compList(g||groupsOfStudent(st)[0]||{metier:"MIS"});
+ const gs=groupsOfStudent(st).map(x=>x.id);
+ const seen={},missed={};
+ D.seances.filter(s=>gs.includes(s.gid)&&s.done).forEach(s=>{const abs=(s.done.absents||[]).includes(st.id);(s.comps||[]).forEach(c=>{if(abs)missed[c]=(missed[c]||[]).concat(s);else seen[c]=true})});
+ list.forEach(([code])=>{
+  const p=pts.filter(x=>x.e.type!=="diagnostique"&&x.p.comps[code]!==undefined).sort((a,b)=>(a.date||"")<(b.date||"")?-1:1);
+  const diag=pts.filter(x=>x.e.type==="diagnostique"&&x.p.comps[code]!==undefined).map(x=>x.p.comps[code]);
+  const last=p.slice(-set.nbEvals).map(x=>x.p.comps[code]);const mean=last.length?last.reduce((a,b)=>a+b,0)/last.length:null;
+  const stages=new Set(p.map(x=>x.stage||x.date)).size;
+  let state=0;if(seen[code])state=1;if(p.length)state=2;
+  const enough=p.length>=set.nbEvals&&stages>=Math.min(set.nbEvals,stages>0?set.nbEvals:0)&&new Set(p.map(x=>x.stage||x.date)).size>=set.nbEvals;
+  if(p.length&&mean*100>=set.seuil&&enough)state=3;
+  let fragile=false;if(state===2&&p.length>set.nbEvals){const prev=p.slice(-set.nbEvals-1,-1).map(x=>x.p.comps[code]);const pm=prev.reduce((a,b)=>a+b,0)/prev.length;if(pm*100>=set.seuil)fragile=true}
+  res[code]={state,mean,n:p.length,stages,aConfirmer:state===2&&mean!==null&&mean*100>=set.seuil,fragile,diag:diag.length?diag[diag.length-1]:null,missed:missed[code]||[],pts:p};
+ });return res}
+function studentNotes(st){const pts=studentEvalPoints(st).filter(x=>x.e.type==="sommative");const notes=pts.map(x=>x.p.note20);return {list:pts,moy:notes.length?notes.reduce((a,b)=>a+b,0)/notes.length:null}}
+function progressPct(cs){const v=Object.values(cs).filter(c=>c.n>0||c.state>0);const ev=Object.values(cs).filter(c=>c.mean!==null);if(!ev.length)return null;return ev.reduce((a,c)=>a+c.mean,0)/ev.length}
+function barColor(p){return p===null?"#ccc":p*100>=D.settings.seuil?"var(--green)":p>=.5?"var(--orange)":"var(--red)"}
+
+/* ===================== Alertes ===================== */
+function alertsFor(g){
+ const out=[];const cs=stageOf(g,today());const calOK=hasCal(g);
+ related(g).flatMap(evalsOf).forEach(e=>{
+  if(e.statut==="faite"){const es=stageOf(g,e.date||today());const late=calOK?cs>es:((Date.now()-new Date((e.date||today())+"T12:00").getTime())/864e5>14);
+   if(late)out.push({k:"corriger",cls:"a-o",ic:"📝",t:`${e.titre} à corriger`,d:`Faite le ${fdate(e.date)}${calOK?" (stage "+es+")":""}`,act:`go('saisie','${e.id}')`,btn:"Saisir les notes"})}
+  if(e.statut==="corrigee"||e.statut==="faite"){
+   studentsOf(g).forEach(st=>{const r=(e.res||{})[st.id];if(!r||!r.absent)return;
+    if(!r.abs)out.push({k:"absent",cls:"a-b",ic:"🚪",t:`${st.prenom} ${st.nom} absent(e) : ${e.titre}`,d:"À rattraper : reporter ou annuler l'évaluation",act:`go('saisie','${e.id}')`,btn:"Décider"});
+    else if(r.abs==="stage"&&calOK&&cs>=(+r.reportStage||0))out.push({k:"absent",cls:"a-b",ic:"🚪",t:`${st.prenom} ${st.nom} : rattrapage prévu (${e.titre})`,d:`Reporté au stage ${r.reportStage}`,act:`go('saisie','${e.id}')`,btn:"Saisir"})})}
+ });
+ // absences répétées
+ studentsOf(g).forEach(st=>{let n=0;D.evals.filter(e=>groupsOfStudent(st).some(x=>x.id===e.gid)).forEach(e=>{const r=(e.res||{})[st.id];if(r&&r.absent)n++});
+  D.seances.filter(s=>groupsOfStudent(st).some(x=>x.id===s.gid)&&s.done&&(s.done.absents||[]).includes(st.id)).forEach(()=>n++);
+  if(n>=3)out.push({k:"absent",cls:"a-r",ic:"⚠️",t:`${st.prenom} ${st.nom} : ${n} absences`,d:"Absences répétées : risque de décrochage, à signaler",act:`go('eleve','${st.id}')`,btn:"Voir sa fiche"})});
+ const rp=remedProposal(g);if(rp)out.push({k:"remed",cls:rp.red?"a-r":"a-o",ic:"🔁",t:`Point d'étape : remédiation proposée${rp.ajourn?` (ajournée ${rp.ajourn} fois)`:""}`,d:rp.groupes.length?rp.groupes.map(x=>x.noms.join(", ")+" → "+x.code).slice(0,2).join(" · "):"Aucun jeune en difficulté repéré",act:"go('remed')",btn:"Voir"});
+ return out}
+function remedProposal(g){
+ if(!hasCal(g))return null;const cs=stageOf(g,today());const r=g.remed||{nextAt:D.settings.pointEvery,ajourn:0,hist:[]};
+ if(cs<r.nextAt)return null;
+ const weak={};studentsOf(g).forEach(st=>{const c=compStates(st,g);let w=null;for(const code in c){const x=c[code];if(x.mean!==null&&x.mean*100<D.settings.seuil&&(!w||x.mean<c[w].mean))w=code}if(w)(weak[w]=weak[w]||[]).push(st)});
+ const groupes=[];Object.keys(weak).sort().forEach(code=>{const l=weak[code];for(let i=0;i<l.length;i+=4)groupes.push({code,ids:l.slice(i,i+4).map(s=>s.id),noms:l.slice(i,i+4).map(s=>s.prenom)})});
+ const reportes=[];evalsOf(g).forEach(e=>Object.entries(e.res||{}).forEach(([sid,x])=>{if(x.absent&&x.abs==="remed"){const s=findStudent(sid);if(s)reportes.push({e,s})}}));
+ return {stage:cs,ajourn:r.ajourn||0,red:(r.ajourn||0)>=2,groupes,reportes}}
+
+/* ===================== Rendu général ===================== */
+function start(){S.view="accueil";if(!S.gid||!G(S.gid))S.gid=(D.groups.find(g=>!g.archive)||{}).id||null;
+ document.getElementById("root").innerHTML=`<div id="app"><aside id="side"></aside><div style="flex:1;min-width:0"><div class="topbar"><button onclick="toggleSide()">☰</button><b>Au p'tit pédago</b></div><main id="main"></main></div></div>`;
+ render()}
+function toggleSide(){document.getElementById("side").classList.toggle("open")}
+function go(v,p){S.view=v;S.param=p===undefined?null:p;S.ddOpen=false;document.getElementById("side")&&document.getElementById("side").classList.remove("open");render();window.scrollTo(0,0)}
+function render(){renderSide();const m=document.getElementById("main");const g=cur();
+ if(!g&&!["groupes","reglages","nouveau"].includes(S.view)){m.innerHTML=vEmpty();return}
+ const V={accueil:vAccueil,progression:vProgression,seance:vSeance,evals:vEvals,evaledit:vEvalEdit,saisie:vSaisie,groupe:vGroupe,eleve:vEleve,grille:vGrille,remed:vRemed,bilans:vBilans,reglages:vReglages,groupes:vGroupes,nouveau:vNouveau,calendrier:vCalendrier}[S.view]||vAccueil;
+ m.innerHTML=V(g);if(S.after){const f=S.after;S.after=null;f()}}
+function renderSide(){const g=cur();const el=document.getElementById("side");if(!el)return;
+ const groups=D.groups.filter(x=>!x.archive);
+ const icon=x=>x.kind==="division"?"🏗️":"🔧";
+ const dd=S.ddOpen?`<div class="dd" onclick="event.stopPropagation()"><div class="h">CAP</div>${groups.map(x=>`<div class="it ${g&&x.id===g.id?"on":""}" onclick="S.gid='${x.id}';go('accueil')">${icon(x)} ${h(x.name)}<span>${x.kind==="division"?"division":"section"}</span></div>`).join("")||'<div class="it" style="color:var(--mut)">Aucun groupe</div>'}
+ ${isAdmin()?`<div class="it add" onclick="go('nouveau')">➕ Nouveau groupe</div>`:""}<div class="it" onclick="go('groupes')">🧭 Tous mes groupes</div></div>`:"";
+ const nav=[["accueil","🏠","Accueil"],["progression","📅","Progression"],["evals","✏️","Évaluations"],["groupe","👥","Mon groupe"],["grille","🧩","Compétences"],["remed","🔁","Remédiations"],["bilans","📄","Bilans"],["calendrier","🗓️","Calendrier"],["reglages","⚙️","Réglages"]];
+ el.innerHTML=`<div class="logo"><div class="m">${houseSvg()}</div><div><b>Au p'tit pédago</b><span>Suivi des apprentis</span></div></div>
+ <div class="sel" onclick="S.ddOpen=!S.ddOpen;renderSide();event.stopPropagation()"><div class="cur">${g?icon(g):"➕"}<div>${g?h(g.name):"Choisir un groupe"}<small>${g?(g.kind==="division"?"CAP · division · ":"CAP · section · ")+studentsOf(g).length+" apprentis":"ou en créer un"}</small></div><span class="chev">${S.ddOpen?"▴":"▾"}</span></div>${dd}</div>
+ <nav>${nav.map(([v,i,l])=>`<a class="${S.view===v||(v==="evals"&&["evaledit","saisie"].includes(S.view))||(v==="progression"&&S.view==="seance")||(v==="groupe"&&S.view==="eleve")?"on":""} ${!g&&!["reglages"].includes(v)?"off":""} ${v==="reglages"&&!isAdmin()?"off":""} ${v==="calendrier"&&!isAdmin()?"off":""}" onclick="go('${v}')"><span class="ic">${i}</span>${l}</a>`).join("")}</nav>
+ <div class="side-foot" id="sidefoot"></div>`;renderSideFoot()}
+function renderSideFoot(){const el=document.getElementById("sidefoot");if(!el)return;const u=D.updated?new Date(D.updated).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}):"jamais";
+ el.innerHTML=`<b>💾 Enregistré sur cet appareil</b>${u}${fileHandle?`<br>${S.fileOk===false?"⚠️ Fichier lié non accessible":"✓ Fichier lié à jour"}`:""}<div class="row"><button class="sbtn" onclick="exportFile()">Sauvegarder dans un fichier</button><button class="sbtn" onclick="lockNow()">🔒 Verrouiller</button></div><div style="margin-top:6px;font-size:11.5px;color:#9fb0c2">${ROLE==="remp"?"Connecté : remplaçant":"Connecté : administrateur"} · <a href="mode-emploi.html" target="_blank" style="color:#cfd9e4">Mode d'emploi</a></div>`}
+function lockNow(){ROLE=null;renderLock()}
+document.addEventListener("click",()=>{if(S.ddOpen){S.ddOpen=false;renderSide()}});
+function toast(t){const d=document.createElement("div");d.className="ok-msg";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+function modal(html,onOk,okLbl="Enregistrer",opts={}){const bg=document.createElement("div");bg.className="modal-bg";bg.innerHTML=`<div class="modal">${html}<div class="acts"><button class="btn" data-x>Annuler</button>${onOk?`<button class="btn p" data-ok>${okLbl}</button>`:""}</div></div>`;document.body.appendChild(bg);
+ bg.querySelector("[data-x]").onclick=()=>bg.remove();if(onOk)bg.querySelector("[data-ok]").onclick=()=>{if(onOk(bg)!==false)bg.remove()};if(opts.init)opts.init(bg);return bg}
+function stName(s){return `${h(s.prenom)} ${h(s.nom)}`}
+function initials(s){return ((s.prenom||"?")[0]+(s.nom||"?")[0]).toUpperCase()}
+function pill(st){return `<span class="pill s${st.state}">${STATE_ICO[st.state]} ${STATE_LBL[st.state]}${st.aConfirmer?" · à confirmer":""}${st.fragile?" · fragile":""}</span>`}
+
+/* ===================== Vues ===================== */
+function vEmpty(){return `<div class="head"><div><h1>Bienvenue dans votre outil de suivi</h1><div class="sub">Commencez par créer votre premier groupe, ou chargez le groupe de démonstration pour essayer.</div></div></div>
+ <div class="card"><div class="consigne">L'outil est vide au départ : c'est vous qui créez vos groupes, votre calendrier, votre progression et vos évaluations.</div>
+ <div class="row">${isAdmin()?`<button class="btn p" onclick="go('nouveau')">➕ Créer un groupe</button><button class="btn" onclick="loadDemo()">🧪 Charger le groupe de démonstration</button>`:'<span class="empty">Seul l\'administrateur peut créer un groupe.</span>'}<button class="btn" onclick="importFile()">📂 Ouvrir un fichier de suivi</button></div></div>`}
+
+function nextSeance(g){return seancesOf(g).find(s=>!s.done)}
+function docsBlock(s){const docs=s.docs||[];const by=t=>docs.filter(d=>(d.type||"support")===t);
+ const one=d=>`<a class="doc" href="${h(d.url)}" target="_blank" rel="noopener"><i>${DOC_ICONS[d.kind]||"📄"}</i><div>${h(d.label||d.kind)}<span>Ouvrir</span></div></a>`;
+ const blk=(t,cls,extra="")=>`<div class="dg ${cls}"><div class="dgh">${t==="support"?"📚":t==="synthese"?"🧩":"🔒"} ${DOC_TYPES[t]} ${extra}</div>${by(t).length?`<div class="docs">${by(t).map(one).join("")}</div>`:`<div class="empty">Aucun document fléché${isAdmin()?" (à ajouter dans la séance)":""}.</div>`}</div>`;
+ return blk("support","")+`<div class="grid2" style="grid-template-columns:1.4fr 1fr;gap:10px">${blk("synthese","syn","<small>à distribuer en fin de séance</small>")}${blk("formateur","frm")}</div>`}
+function vAccueil(g){
+ const s=nextSeance(g);const al=alertsFor(g);const st=studentsOf(g);const cs=stageOf(g,today());const nb=g.calendar?g.calendar.length:0;
+ const evs=s?D.evals.filter(e=>e.seanceId===s.id):[];const evComps=[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))];
+ return `<div class="head"><div><h1>${s?"Prochaine séance":"Accueil"}</h1><div class="sub">${h(g.name)} · ${g.kind==="division"?"Division":"Section"} · ${hasCal(g)?`Stage ${cs||"—"} sur ${nb||memberGroups(g)[0].calendar.length}`:"calendrier non saisi"}</div></div></div>
+ <div class="grid2"><div>
+ <div class="card next"><div class="lbl">Séance proposée</div>
+ ${s?`<h2>${seanceCode(s)} <small>· ${h(s.titre)}</small></h2>
+  <div style="margin:6px 0 2px"><b style="font-size:12.5px;color:var(--mut)">Compétences vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v" title="${h(compName(c))}">${c} ${h(compName(c))}</span>`).join("")||'<span class="empty">aucune cochée</span>'}</div>
+  <div><b style="font-size:12.5px;color:var(--mut)">Compétences évaluées :</b> ${evComps.map(c=>`<span class="tag e">${c}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div>
+  ${docsBlock(s)}
+  <div class="row" style="margin-top:12px"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ Séance faite</button><button class="btn" onclick="go('seance','${s.id}')">Ouvrir la séance</button><button class="btn" onclick="go('progression')">Choisir une autre séance</button></div>`
+ :`<div class="empty" style="font-size:15px">${seancesOf(g).length?"Toutes les séances de la progression sont faites. 🎉":"Aucune séance dans la progression."}</div>${isAdmin()?`<div class="row" style="margin-top:10px"><button class="btn p" onclick="go('progression')">📅 Construire ma progression</button></div>`:""}`}
+ </div>
+ <div class="card"><div class="lbl">Progression du groupe</div>${timeline(g)}</div>
+ </div><div>
+ <div class="card"><div class="lbl">À faire</div>${al.length?al.map(a=>`<div class="alert ${a.cls}"><span>${a.ic}</span><div style="flex:1"><b>${h(a.t)}</b><span class="t">${h(a.d)}</span><div class="row" style="margin-top:6px"><button class="btn s ${a.k==="remed"?"g":"p"}" onclick="${a.act}">${a.btn}</button></div></div></div>`).join(""):'<div class="empty">Rien à faire pour l\'instant. ✓</div>'}</div>
+ <div class="card"><div class="lbl">Mon groupe · ${st.length} apprentis</div>${st.length?`<div class="studs">${st.map(x=>{const p=progressPct(compStates(x,g));return `<div class="stc" onclick="go('eleve','${x.id}')"><div class="av" style="background:${(METIERS[x.metier]||{}).color||"#1f5fa8"}">${initials(x)}</div>${h(x.prenom)}<div class="bar" style="margin-top:6px"><i style="width:${p===null?0:pct(p)}%;background:${barColor(p)}"></i></div></div>`}).join("")}</div><div class="legend">Barre = niveau moyen des compétences évaluées · vert ≥ ${D.settings.seuil} % · orange 50–${D.settings.seuil-1} % · rouge &lt; 50 %</div>`:'<div class="empty">Aucun apprenti. Ajoutez-les dans « Mon groupe ».</div>'}</div>
+ </div></div>`}
+function timeline(g){const ss=related(g).flatMap(seancesOf);if(!ss.length)return '<div class="empty">Aucune séance.</div>';
+ const byNum={};ss.forEach(s=>{(byNum[s.num]=byNum[s.num]||{})[s.part]=s});
+ const nxt=nextSeance(g);const nxs=related(g).map(nextSeance).filter(Boolean).map(x=>x.id);
+ const cell=(s)=>{if(!s)return `<div style="background:#f6f4f0;color:#c9c2b6">·</div>`;const evs=D.evals.filter(e=>e.seanceId===s.id);let cls="st-todo",lbl="○";
+  if(s.done){cls="st-ok";lbl="✓";if(evs.some(e=>e.statut==="faite")){cls="st-wait";lbl="!"}}
+  return `<div class="${cls} ${nxs.includes(s.id)?"st-cur":""}" title="${seanceCode(s)} ${h(s.titre)}${s.done?" · faite le "+fdate(s.done.date):""}" onclick="go('seance','${s.id}')" style="cursor:pointer">${s.part}${lbl}</div>`};
+ return `<div class="timeline">${Object.keys(byNum).sort((a,b)=>a-b).map(n=>`<div class="chip"><div class="n">S-${String(n).padStart(2,"0")}</div><div class="hv">${cell(byNum[n].D)}${cell(byNum[n].S)}</div></div>`).join("")}</div>
+ <div class="legend">✓ faite · ! faite, évaluation à corriger · ○ à venir · D = division, S = section · cliquez pour ouvrir</div>`}
+
+function seanceFaite(id){const s=D.seances.find(x=>x.id===id);const g=G(s.gid);const st=studentsOf(g);
+ modal(`<h2>${seanceCode(s)} · séance faite</h2><div class="consigne">Tous les apprentis sont présents par défaut. Cochez seulement les <b>absents</b>.</div>
+ <label class="f">Date de la séance</label><input type="date" id="dt" value="${s.done?s.done.date:today()}">
+ <label class="f">Absents</label>${st.map(x=>`<label class="cbx"><input type="checkbox" value="${x.id}" ${s.done&&(s.done.absents||[]).includes(x.id)?"checked":""}> ${stName(x)}</label>`).join("")||'<div class="empty">Aucun apprenti</div>'}
+ <div class="hint">Les compétences de la séance seront comptées comme « vues » pour les présents. Pour les absents, elles passent dans leur rattrapage.</div>`,bg=>{
+  s.done={date:bg.querySelector("#dt").value||today(),absents:[...bg.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.value)};save("Séance enregistrée");render()},"Valider")}
+
+function vProgression(g){const ss=seancesOf(g);
+ return `<div class="head"><div><h1>Progression</h1><div class="sub">${h(g.name)} · ${ss.length} séances · l'outil propose toujours la prochaine séance non faite</div></div>
+ <div class="row">${isAdmin()?`<button class="btn p" onclick="editSeance()">➕ Ajouter une séance</button><button class="btn" onclick="copyProg()">⧉ Reprendre une progression</button>`:""}</div></div>
+ <div class="consigne">Une séance = un numéro (S-01, S-02…) et une partie : <b>D</b> division ou <b>S</b> section. Cochez les compétences <b>vues</b> pendant la séance et fléchez vos documents (liens OneDrive). La date est enregistrée quand vous cliquez « Séance faite ».</div>
+ <div class="tw"><table><tr><th>Code</th><th>Titre</th><th>Compétences vues</th><th>Docs</th><th>Faite le</th><th></th></tr>
+ ${ss.map(s=>`<tr><td><b>${seanceCode(s)}</b></td><td>${h(s.titre)}</td><td>${(s.comps||[]).map(c=>`<span class="tag v">${c}</span>`).join("")}</td><td class="c">${(s.docs||[]).length}</td><td>${s.done?fdate(s.done.date)+` <span class="hint">(stage ${stageOf(g,s.done.date)||"—"})</span>`:'<span class="hint">à venir</span>'}</td>
+ <td style="white-space:nowrap"><button class="btn s" onclick="go('seance','${s.id}')">Ouvrir</button> ${isAdmin()?`<button class="btn s" onclick="moveSeance('${s.id}',-1)">↑</button><button class="btn s" onclick="moveSeance('${s.id}',1)">↓</button>`:""}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune séance. Cliquez « Ajouter une séance ».</td></tr>`}</table></div>`}
+function moveSeance(id,d){const g=cur();const ss=seancesOf(g);const i=ss.findIndex(s=>s.id===id);const j=i+d;if(j<0||j>=ss.length)return;const t=ss[i].ordre;ss[i].ordre=ss[j].ordre;ss[j].ordre=t;save();render()}
+function compChecks(g,sel,name){const list=compList(g);const sl=new Set(sel||[]);
+ const blk=(f,t)=>`<div class="hint" style="margin-top:6px;font-weight:700">${t}</div>`+list.filter(c=>c[2]===f).map(c=>`<label class="cbx"><input type="checkbox" name="${name}" value="${c[0]}" ${sl.has(c[0])?"checked":""}> <b>${c[0]}</b>&nbsp;${h(c[1])}</label>`).join("");
+ return blk(1,"Compétences utiles en étude de construction")+`<details><summary class="hint" style="cursor:pointer;margin-top:6px">Autres compétences du référentiel (atelier)</summary>${blk(0,"")}</details>`}
+function editSeance(id){const g=cur();const s=id?D.seances.find(x=>x.id===id):null;const ss=seancesOf(g);
+ const lastNum=ss.length?Math.max(...ss.map(x=>x.num)):0;
+ modal(`<h2>${s?"Modifier la séance":"Nouvelle séance"}</h2>
+ <div class="row"><div style="flex:1"><label class="f">Numéro</label><input type="number" id="num" min="1" value="${s?s.num:lastNum+(g.kind==="division"?1:1)}"></div>
+ <div style="flex:1"><label class="f">Partie</label><select id="part"><option value="D" ${(!s&&g.kind==="division")||(s&&s.part==="D")?"selected":""}>D · division</option><option value="S" ${(!s&&g.kind!=="division")||(s&&s.part==="S")?"selected":""}>S · section</option></select></div></div>
+ <label class="f">Titre de la séance</label><input type="text" id="tit" value="${h(s?s.titre:"")}" placeholder="ex. Plan de masse, plan de niveau">
+ <label class="f">Compétences vues pendant la séance</label>${compChecks(g,s&&s.comps,"cv")}`,bg=>{
+  const t=bg.querySelector("#tit").value.trim();if(!t){alert("Donnez un titre à la séance.");return false}
+  const o=s||{id:uid(),gid:g.id,ordre:(ss.length?Math.max(...ss.map(x=>x.ordre)):0)+1,docs:[],done:null,annee:g.annee||1};
+  o.num=+bg.querySelector("#num").value||1;o.part=bg.querySelector("#part").value;o.titre=t;o.comps=[...bg.querySelectorAll("input[name=cv]:checked")].map(i=>i.value);
+  if(!s)D.seances.push(o);save("Séance enregistrée");S.view="seance";S.param=o.id;render()})}
+function vSeance(g){const s=D.seances.find(x=>x.id===S.param);if(!s)return vProgression(g);const evs=D.evals.filter(e=>e.seanceId===s.id);
+ return `<div class="head"><div><h1>${seanceCode(s)} · ${h(s.titre)}</h1><div class="sub">${s.done?`Faite le ${fdate(s.done.date)} · ${(s.done.absents||[]).length} absent(s)`:"À venir"}</div></div>
+ <div class="row"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ ${s.done?"Modifier la date / les absents":"Séance faite"}</button>${s.done&&isAdmin()?`<button class="btn" onclick="undoFaite('${s.id}')">Annuler « faite »</button>`:""}${isAdmin()?`<button class="btn" onclick="editSeance('${s.id}')">✎ Modifier</button>`:""}</div></div>
+ <div class="card"><div class="lbl">Compétences</div><div><b style="font-size:13px">Vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v">${c} ${h(compName(c))}</span>`).join("")||'<span class="empty">aucune</span>'}</div>
+ <div style="margin-top:6px"><b style="font-size:13px">Évaluées :</b> ${[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))].map(c=>`<span class="tag e">${c}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div></div>
+ <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Documents de la séance</div>${isAdmin()?`<button class="btn s" onclick="editDocs('${s.id}')">🔗 Flécher mes documents</button>`:""}</div>${docsBlock(s)}</div>
+ <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Évaluations de la séance</div>${isAdmin()?`<button class="btn s p" onclick="newEval('${s.id}')">➕ Créer une évaluation</button>`:""}</div>
+ ${evs.length?`<table>${evs.map(e=>evalRow(e)).join("")}</table>`:'<div class="empty">Aucune évaluation liée à cette séance.</div>'}</div>
+ ${s.done&&(s.done.absents||[]).length?`<div class="card"><div class="lbl">Absents à cette séance</div>${s.done.absents.map(id=>{const x=findStudent(id);return x?`<span class="tag">${stName(x)}</span>`:""}).join("")}<div class="hint">Les compétences vues passent dans leur rattrapage (fiche du jeune).</div></div>`:""}`}
+function undoFaite(id){if(!confirm("Remettre cette séance « à venir » ?"))return;D.seances.find(x=>x.id===id).done=null;save();render()}
+function editDocs(id){const s=D.seances.find(x=>x.id===id);let docs=JSON.parse(JSON.stringify(s.docs||[]));
+ const rowH=(d,i)=>`<div class="ex" data-i="${i}"><div class="row"><select data-k="type" style="flex:1">${Object.entries(DOC_TYPES).map(([k,v])=>`<option value="${k}" ${d.type===k?"selected":""}>${v}</option>`).join("")}</select><select data-k="kind" style="flex:1">${Object.keys(DOC_ICONS).map(k=>`<option ${d.kind===k?"selected":""}>${k}</option>`).join("")}</select></div>
+ <input type="text" data-k="label" placeholder="Nom affiché (ex. Dossier apprenant S-06)" value="${h(d.label)}" style="margin-top:6px"><input type="url" data-k="url" placeholder="Lien OneDrive (https://…)" value="${h(d.url)}" style="margin-top:6px"><div class="row" style="margin-top:6px"><button class="btn s danger" data-del>Retirer</button></div></div>`;
+ const bg=modal(`<h2>Flécher mes documents</h2><div class="consigne">Dans OneDrive : clic droit sur le fichier ou le dossier → <b>Partager</b> → <b>Copier le lien</b>, puis collez-le ici. Un seul lien vers le dossier de la séance suffit si vous préférez.</div><div id="dl"></div><button class="btn s" id="add" style="margin-top:10px">➕ Ajouter un document</button>`,bg=>{
+  docs=[...bg.querySelectorAll("#dl .ex")].map(x=>{const o={};x.querySelectorAll("[data-k]").forEach(i=>o[i.dataset.k]=i.value.trim());return o}).filter(d=>d.url);
+  const bad=docs.find(d=>!/^https?:\/\//i.test(d.url));if(bad){alert("Un lien doit commencer par https://");return false}
+  s.docs=docs;save("Documents fléchés");render()},"Enregistrer",{init:bg=>{const dl=bg.querySelector("#dl");const draw=()=>{dl.innerHTML=docs.map(rowH).join("");dl.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{sync();docs.splice(+b.closest(".ex").dataset.i,1);draw()})};
+  const sync=()=>{docs=[...dl.querySelectorAll(".ex")].map(x=>{const o={};x.querySelectorAll("[data-k]").forEach(i=>o[i.dataset.k]=i.value);return o})};
+  bg.querySelector("#add").onclick=()=>{sync();docs.push({type:"support",kind:"Dossier apprenant",label:"",url:""});draw()};if(!docs.length)docs.push({type:"support",kind:"Dossier apprenant",label:"",url:""});draw()}})}
+function copyProg(){const g=cur();const others=D.groups.filter(x=>x.id!==g.id&&seancesOf(x).length);
+ if(!others.length){alert("Aucun autre groupe n'a de progression à reprendre.");return}
+ modal(`<h2>Reprendre une progression</h2><div class="consigne">Recopie les séances, les compétences vues, les documents fléchés et les évaluations (exercices et barèmes) d'un autre groupe. <b>Sans les jeunes ni les notes.</b></div>
+ <label class="f">Groupe source</label><select id="src">${others.map(x=>`<option value="${x.id}">${h(x.name)} (${seancesOf(x).length} séances)</option>`).join("")}</select>`,bg=>{
+  const src=G(bg.querySelector("#src").value);let base=(seancesOf(g).length?Math.max(...seancesOf(g).map(x=>x.ordre)):0);const map={};
+  seancesOf(src).forEach(s=>{const n=Object.assign(JSON.parse(JSON.stringify(s)),{id:uid(),gid:g.id,done:null,ordre:++base});map[s.id]=n.id;D.seances.push(n)});
+  evalsOf(src).filter(e=>!e.remOf).forEach(e=>{D.evals.push({id:uid(),gid:g.id,seanceId:map[e.seanceId]||null,titre:e.titre,type:e.type,date:"",statut:"a_faire",ex:JSON.parse(JSON.stringify(e.ex)),res:{},log:[]})});
+  save("Progression reprise");render()},"Reprendre")}
+
+function evalRow(e){const g=G(e.gid);const sts={a_faire:'<span class="pill s0">'+STATE_ICO[0]+' À faire</span>',faite:'<span class="pill s2">'+STATE_ICO[2]+' Faite · à corriger</span>',corrigee:'<span class="pill s3">'+STATE_ICO[3]+' Corrigée</span>'};
+ const s=e.seanceId?D.seances.find(x=>x.id===e.seanceId):null;
+ return `<tr><td><b>${h(e.titre)}</b>${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${s?seanceCode(s)+" · ":""}${{diagnostique:"diagnostique",formative:"formative",sommative:"sommative"}[e.type]} · ${e.ex.length} exercice(s) · /${e.ex.reduce((a,x)=>a+x.bareme,0)}</div></td><td>${e.date?fdate(e.date):'<span class="hint">sans date</span>'}</td><td>${sts[e.statut]}</td>
+ <td style="white-space:nowrap;text-align:right"><button class="btn s p" onclick="go('saisie','${e.id}')">Saisir les notes</button> ${isAdmin()?`<button class="btn s" onclick="go('evaledit','${e.id}')">✎</button>`:""}</td></tr>`}
+function vEvals(g){const evs=evalsOf(g);
+ return `<div class="head"><div><h1>Évaluations</h1><div class="sub">${h(g.name)} · ${evs.length} évaluation(s)</div></div>${isAdmin()?`<button class="btn p" onclick="newEval()">➕ Créer une évaluation</button>`:""}</div>
+ <div class="consigne">Pour chaque évaluation : vous créez les exercices avec leur barème et vous cochez les compétences visées. Ensuite, vous tapez seulement les points de chaque exercice : l'outil calcule la note et fait avancer les compétences.</div>
+ <div class="card">${evs.length?`<table>${evs.map(evalRow).join("")}</table>`:'<div class="empty">Aucune évaluation.</div>'}</div>`}
+function newEval(seanceId){const g=cur();const e={id:uid(),gid:g.id,seanceId:seanceId||null,titre:"",type:"sommative",date:today(),statut:"a_faire",ex:[{id:uid(),label:"Exercice 1",bareme:5,comps:[]}],res:{},log:[],isNew:true};S.draft=e;go("evaledit","__draft")}
+function vEvalEdit(g){const e=S.param==="__draft"?S.draft:D.evals.find(x=>x.id===S.param);if(!e)return vEvals(g);const ss=seancesOf(g);
+ const others=evalsOf(g).filter(x=>x.id!==e.id&&!x.remOf);
+ S.after=()=>bindEvalEdit(e);
+ return `<div class="head"><div><h1>${e.isNew?"Nouvelle évaluation":"Modifier l'évaluation"}</h1><div class="sub">${h(g.name)}</div></div></div>
+ <div class="card"><div class="row"><div style="flex:2;min-width:220px"><label class="f">Titre</label><input type="text" id="e_t" value="${h(e.titre)}" placeholder="ex. Lecture du plan de plomberie"></div>
+ <div style="flex:1;min-width:150px"><label class="f">Date</label><input type="date" id="e_d" value="${e.date||""}"></div></div>
+ <div class="row"><div style="flex:1;min-width:220px"><label class="f">Type d'évaluation</label><select id="e_ty">${Object.entries(EVAL_TYPES).map(([k,v])=>`<option value="${k}" ${e.type===k?"selected":""}>${v}</option>`).join("")}</select></div>
+ <div style="flex:1;min-width:220px"><label class="f">Séance liée (facultatif)</label><select id="e_s"><option value="">— aucune —</option>${ss.map(s=>`<option value="${s.id}" ${e.seanceId===s.id?"selected":""}>${seanceCode(s)} · ${h(s.titre)}</option>`).join("")}</select></div></div>
+ <label class="f">Évaluation de remédiation ? (facultatif)</label><select id="e_r"><option value="">Non</option>${others.map(x=>`<option value="${x.id}" ${e.remOf===x.id?"selected":""}>Oui, remédiation de : ${h(x.titre)}</option>`).join("")}</select>
+ <div class="hint">Pour une remédiation, l'outil garde la meilleure des deux notes, avec la trace des deux.</div></div>
+ <div class="card"><div class="lbl">Exercices</div><div class="consigne">Pour chaque exercice : un nom, un barème, et les compétences visées (cochez-en une ou plusieurs).</div><div id="exl"></div>
+ <div class="row" style="margin-top:12px"><button class="btn" id="addex">➕ Ajouter un exercice</button></div></div>
+ <div class="row"><button class="btn p" id="e_save">Enregistrer l'évaluation</button><button class="btn" onclick="history.length;go('evals')">Annuler</button>${!e.isNew&&isAdmin()?`<button class="btn danger" onclick="delEval('${e.id}')">Supprimer</button>`:""}</div>`}
+function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));const box=document.getElementById("exl");
+ const sync=()=>{ex=[...box.querySelectorAll(".ex")].map((d,i)=>({id:ex[i].id,label:d.querySelector("[data-l]").value,bareme:+d.querySelector("[data-b]").value||0,comps:[...d.querySelectorAll("input[type=checkbox]:checked")].map(c=>c.value)}))};
+ const draw=()=>{box.innerHTML=ex.map((x,i)=>`<div class="ex"><div class="row"><div style="flex:3;min-width:200px"><label class="f" style="margin-top:0">Exercice ${i+1}</label><input type="text" data-l value="${h(x.label)}"></div><div style="flex:1;min-width:90px"><label class="f" style="margin-top:0">Barème (points)</label><input type="number" min="0" step="0.5" data-b value="${x.bareme}"></div></div>
+ <label class="f">Compétences visées</label>${compChecks(g,x.comps,"c"+i)}<div class="row" style="margin-top:6px"><button class="btn s danger" data-del="${i}">Retirer l'exercice</button></div></div>`).join("");
+  box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{sync();if(ex.length<2)return;ex.splice(+b.dataset.del,1);draw()})};
+ draw();document.getElementById("addex").onclick=()=>{sync();ex.push({id:uid(),label:"Exercice "+(ex.length+1),bareme:5,comps:[]});draw()};
+ document.getElementById("e_save").onclick=()=>{sync();const t=document.getElementById("e_t").value.trim();if(!t){alert("Donnez un titre à l'évaluation.");return}
+  if(ex.some(x=>!x.bareme)){alert("Chaque exercice doit avoir un barème.");return}
+  if(ex.some(x=>!x.comps.length)&&!confirm("Un exercice n'a aucune compétence cochée : il comptera dans la note mais ne fera avancer aucune compétence. Continuer ?"))return;
+  e.titre=t;e.date=document.getElementById("e_d").value;e.type=document.getElementById("e_ty").value;e.seanceId=document.getElementById("e_s").value||null;e.remOf=document.getElementById("e_r").value||null;e.ex=ex;
+  if(e.isNew){delete e.isNew;D.evals.push(e)}save("Évaluation enregistrée");go("saisie",e.id)}}
+function delEval(id){if(!confirm("Supprimer cette évaluation et toutes ses notes ?"))return;D.evals=D.evals.filter(e=>e.id!==id);save("Évaluation supprimée");go("evals")}
+
+function vSaisie(g){const e=D.evals.find(x=>x.id===S.param);if(!e)return vEvals(g);let st=studentsOf(g);
+ if(e.remOf){const o=D.evals.find(x=>x.id===e.remOf);}
+ const tot=e.ex.reduce((a,x)=>a+x.bareme,0);S.after=()=>bindSaisie(e);
+ return `<div class="head"><div><h1>${h(e.titre)}</h1><div class="sub">${{diagnostique:"Diagnostique · non notée",formative:"Formative · non notée",sommative:"Sommative · compte dans la note"}[e.type]} · ${e.date?fdate(e.date):"sans date"} · total /${tot}</div></div>
+ <div class="row"><button class="btn ${e.statut==="faite"?"n":""}" onclick="setStatut('${e.id}','faite')">${STATE_ICO[2]} Faite · à corriger</button><button class="btn ${e.statut==="corrigee"?"g":""}" onclick="setStatut('${e.id}','corrigee')">${STATE_ICO[3]} Corrigée</button></div></div>
+ <div class="consigne">Tapez les points de chaque exercice et passez à la case suivante (Tab ou Entrée). La note et les compétences se calculent seules. Un jeune absent : cochez « Absent », puis choisissez <b>Reporter</b> ou <b>Annuler</b>. Quand toutes les notes sont tapées, cliquez « Corrigée ».</div>
+ <div class="tw"><table id="stab"><tr><th>Apprenti</th>${e.ex.map(x=>`<th class="c">${h(x.label)}<br><span style="text-transform:none">/${x.bareme} · ${(x.comps||[]).join("+")||"—"}</span></th>`).join("")}<th class="c">Note /20</th><th class="c">Absent</th></tr>
+ ${st.map(s=>{const r=(e.res||{})[s.id]||{};return `<tr data-s="${s.id}"><td>${stName(s)}${r.absent&&r.abs?`<div class="hint">${r.abs==="annule"?"Évaluation annulée":r.abs==="remed"?"Reportée à la remédiation":"Reportée au stage "+h(r.reportStage)}</div>`:""}</td>
+ ${e.ex.map(x=>`<td class="c"><input class="sc" type="number" inputmode="decimal" min="0" max="${x.bareme}" step="0.25" data-x="${x.id}" value="${r.sc&&r.sc[x.id]!==undefined?r.sc[x.id]:""}" ${r.absent?"disabled":""}></td>`).join("")}
+ <td class="c" data-note>—</td><td class="c"><input type="checkbox" data-abs ${r.absent?"checked":""} style="width:auto"> ${r.absent?`<button class="btn s" data-dec>${r.abs?"Changer":"Décider"}</button>`:""}</td></tr>`}).join("")}</table></div>
+ <div class="card" style="margin-top:14px"><div class="lbl">Analyse de l'évaluation</div><div id="ana"></div></div>
+ ${(e.log||[]).length?`<details class="card"><summary class="lbl" style="cursor:pointer">Historique des corrections de notes (${e.log.length})</summary><table>${e.log.slice().reverse().map(l=>{const s=findStudent(l.sid);const x=e.ex.find(y=>y.id===l.ex);return `<tr><td>${new Date(l.t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</td><td>${s?stName(s):"?"}</td><td>${x?h(x.label):""}</td><td>${h(l.old)} → ${h(l.new)}</td></tr>`}).join("")}</table></details>`:""}`}
+function setStatut(id,s){const e=D.evals.find(x=>x.id===id);e.statut=s;if(!e.date)e.date=today();save(s==="corrigee"?"Évaluation corrigée : compétences mises à jour":"Évaluation marquée « faite »");render()}
+function bindSaisie(e){const tab=document.getElementById("stab");e.res=e.res||{};
+ const upd=tr=>{const sid=tr.dataset.s;const p=evalStudentPct(e,sid);tr.querySelector("[data-note]").textContent=p?(Math.round(p.note20*10)/10).toString().replace(".",","):"—"};
+ tab.querySelectorAll("tr[data-s]").forEach(tr=>{upd(tr);const sid=tr.dataset.s;
+  tr.querySelectorAll("input.sc").forEach(inp=>{inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();const all=[...tab.querySelectorAll("input.sc:not([disabled])")];const i=all.indexOf(inp);if(all[i+1])all[i+1].focus()}});
+   inp.addEventListener("change",()=>{const x=e.ex.find(y=>y.id===inp.dataset.x);let v=inp.value===""?"":Math.max(0,Math.min(+inp.value,x.bareme));if(v!==""&&+inp.value>x.bareme){toast("Maximum "+x.bareme+" points");inp.value=v}
+    const r=e.res[sid]=e.res[sid]||{sc:{}};r.sc=r.sc||{};const old=r.sc[x.id];
+    if(old!==undefined&&old!==""&&old!==v&&e.statut==="corrigee"){e.log=e.log||[];e.log.push({t:Date.now(),sid,ex:x.id,old,new:v===""?"(vide)":v})}
+    r.sc[x.id]=v;if(e.statut==="a_faire")e.statut="faite";save();upd(tr);ana()})});
+  tr.querySelector("[data-abs]").addEventListener("change",ev=>{const r=e.res[sid]=e.res[sid]||{sc:{}};r.absent=ev.target.checked;if(!r.absent){delete r.abs;delete r.reportStage}if(e.statut==="a_faire")e.statut="faite";save();render();if(r.absent)decide(e,sid)});
+  const d=tr.querySelector("[data-dec]");if(d)d.onclick=()=>decide(e,sid)});
+ const ana=()=>{const st=studentsOf(cur());const el=document.getElementById("ana");const rows=e.ex.map(x=>{let n=0,low=0;st.forEach(s=>{const r=e.res[s.id];if(!r||r.absent||!r.sc||r.sc[x.id]===undefined||r.sc[x.id]==="")return;n++;if(+r.sc[x.id]<x.bareme/2)low++});return {x,n,low}});
+  el.innerHTML=rows.map(o=>`<div class="row" style="justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span>${h(o.x.label)} <span class="hint">(${(o.x.comps||[]).join(", ")||"—"})</span></span><span>${o.n?`${o.low} / ${o.n} sous la moyenne ${o.n&&o.low/o.n>0.5?'<span class="pill s2">⚠ exercice ou séance à revoir</span>':""}`:'<span class="hint">pas encore de notes</span>'}</span></div>`).join("")};ana()}
+function decide(e,sid){const s=findStudent(sid);const r=e.res[sid];const g=cur();const cs=stageOf(g,today());
+ modal(`<h2>${stName(s)} absent(e)</h2><p class="sub" style="margin-bottom:8px">${h(e.titre)}</p>
+ <label class="cbx"><input type="radio" name="d" value="remed" ${r.abs==="remed"?"checked":""}> <span><b>Reporter à la prochaine remédiation</b><br><span class="hint">L'évaluation apparaîtra au prochain point d'étape.</span></span></label>
+ <label class="cbx"><input type="radio" name="d" value="stage" ${r.abs==="stage"?"checked":""}> <span><b>Reporter à un stage précis</b> : stage n° <input type="number" id="rs" min="1" value="${r.reportStage||cs+1}" style="width:70px;display:inline-block"><br><span class="hint">Elle réapparaîtra dans « À faire » à ce stage.</span></span></label>
+ <label class="cbx"><input type="radio" name="d" value="annule" ${r.abs==="annule"?"checked":""}> <span><b>Annuler</b><br><span class="hint">Non comptée : ni la note ni les compétences ne sont pénalisées. La fiche garde la mention « annulée (absent) ».</span></span></label>
+ <div class="hint" style="margin-top:8px">Pour saisir le rattrapage, décochez « Absent » et tapez les points.</div>`,bg=>{const v=(bg.querySelector("input[name=d]:checked")||{}).value;if(!v){alert("Choisissez une option.");return false}r.abs=v;if(v==="stage")r.reportStage=+bg.querySelector("#rs").value;else delete r.reportStage;save("Décision enregistrée");render()},"Valider")}
+
+function vGroupe(g){const all=studentsOf(g,true);
+ return `<div class="head"><div><h1>Mon groupe</h1><div class="sub">${h(g.name)} · ${all.filter(s=>s.actif!==false).length} apprentis actifs</div></div>
+ <div class="row">${isAdmin()&&g.kind!=="division"?`<button class="btn p" onclick="addStudents()">➕ Ajouter des apprentis</button>`:""}<button class="btn" onclick="exportCSV()">⬇ Exporter les notes (Excel)</button>${isAdmin()?`<button class="btn" onclick="groupSettings()">⚙ Réglages du groupe</button>`:""}</div></div>
+ ${g.kind==="division"?`<div class="consigne">Division composée de : ${memberGroups(g).map(m=>`<b>${h(m.name)}</b>`).join(", ")||"aucun groupe"}. Les apprentis s'ajoutent dans leur groupe métier.</div>`:""}
+ <div class="tw"><table><tr><th>Apprenti</th><th>Métier</th><th>Niveau moyen</th><th class="c">Acquises</th><th class="c">Moyenne /20</th><th></th></tr>
+ ${all.map(s=>{const c=compStates(s,g);const p=progressPct(c);const nb=Object.values(c).filter(x=>x.state===3).length;const n=studentNotes(s);
+ return `<tr style="${s.actif===false?"opacity:.5":""}"><td><b>${stName(s)}</b>${s.actif===false?` <span class="hint">sorti(e) le ${fdate(s.sortie)}</span>`:""}</td><td>${h(s.metier||"")}</td><td><div class="row" style="gap:6px"><div class="bar" style="width:90px"><i style="width:${p===null?0:pct(p)}%;background:${barColor(p)}"></i></div><span class="hint">${p===null?"—":pct(p)+" %"}</span></div></td><td class="c">${nb} / ${Object.keys(c).length}</td><td class="c">${n.moy===null?"—":(Math.round(n.moy*10)/10).toString().replace(".",",")}</td><td style="text-align:right;white-space:nowrap"><button class="btn s" onclick="go('eleve','${s.id}')">Fiche</button></td></tr>`}).join("")||`<tr><td colspan="6" class="empty">Aucun apprenti.</td></tr>`}</table></div>`}
+function addStudents(){const g=cur();modal(`<h2>Ajouter des apprentis</h2><div class="consigne">Collez votre liste, <b>un apprenti par ligne</b> : <code>Nom ; Prénom</code>. Exemple :<br>DUPONT ; Léa<br>MARTIN ; Tom</div><textarea id="lst" style="min-height:160px"></textarea>`,bg=>{
+ const lines=bg.querySelector("#lst").value.split(/\n/).map(l=>l.trim()).filter(Boolean);let n=0;
+ lines.forEach(l=>{const p=l.split(/[;\t,]/).map(x=>x.trim());if(!p[0])return;g.students.push({id:uid(),nom:p[0],prenom:p[1]||"",actif:true,entree:today()});n++});save(n+" apprenti(s) ajouté(s)");render()},"Ajouter")}
+function vEleve(g){const s=findStudent(S.param);if(!s)return vGroupe(g);const c=compStates(s,g);const n=studentNotes(s);const p=progressPct(c);
+ const gs=groupsOfStudent(s).map(x=>x.id);const evs=D.evals.filter(e=>gs.includes(e.gid)).sort(byDate);
+ const diag=evs.filter(e=>e.type==="diagnostique"&&e.statut==="corrigee");
+ const absS=D.seances.filter(x=>gs.includes(x.gid)&&x.done&&(x.done.absents||[]).includes(s.id));
+ return `<div class="head"><div><h1>${stName(s)}</h1><div class="sub">${h(s.metier||"")} · ${groupsOfStudent(s).map(x=>h(x.name)).join(" · ")}${s.actif===false?" · sorti(e) le "+fdate(s.sortie):""}</div></div>
+ <div class="row"><button class="btn n" onclick="window.print()">🖨 Imprimer le bilan</button>${isAdmin()?`<button class="btn" onclick="editStudent('${s.id}')">✎ Modifier / sortir / effacer</button>`:""}</div></div>
+ <div class="only-print"><h2>Bilan individuel · ${new Date().toLocaleDateString("fr-FR")}</h2></div>
+ <div class="card"><div class="row" style="gap:24px"><div><div class="lbl">Niveau moyen</div><b style="font-size:22px">${p===null?"—":pct(p)+" %"}</b></div><div><div class="lbl">Compétences acquises</div><b style="font-size:22px">${Object.values(c).filter(x=>x.state===3).length} / ${Object.keys(c).length}</b></div><div><div class="lbl">Moyenne (sommatives)</div><b style="font-size:22px">${n.moy===null?"—":(Math.round(n.moy*10)/10).toString().replace(".",",")+" /20"}</b></div></div>
+ ${diag.length?`<div class="hint" style="margin-top:8px">Positionnement d'entrée : ${diag.map(e=>{const x=evalStudentPct(e,s.id);return h(e.titre)+" : "+(x?pct(x.note20/20)+" %":"absent")}).join(" · ")}</div>`:""}</div>
+ <div class="card"><div class="lbl">Compétences</div><div class="tw" style="border:0"><table><tr><th>Compétence</th><th>État</th><th>Niveau (${D.settings.nbEvals} dernières)</th><th class="c">Évaluations</th><th>Positionnement</th></tr>
+ ${compList(g).map(([code,nm,f])=>{const x=c[code];if(!f&&x.state===0)return "";return `<tr><td><b>${code}</b> ${h(nm)}${x.missed.length?`<div class="hint">⚠ absent à ${x.missed.map(seanceCode).join(", ")} : à rattraper</div>`:""}</td><td>${pill(x)}</td><td>${x.mean===null?"—":`<div class="row" style="gap:6px"><div class="bar" style="width:80px"><i style="width:${pct(x.mean)}%;background:${barColor(x.mean)}"></i></div>${pct(x.mean)} %</div>`}</td><td class="c">${x.n}</td><td>${x.diag===null?"—":pct(x.diag)+" %"}</td></tr>`}).join("")}</table></div>
+ <div class="legend">${STATE_ICO[0]} Pas vue · ${STATE_ICO[1]} Vue en séance · ${STATE_ICO[2]} En cours · ${STATE_ICO[3]} Acquise (au moins ${D.settings.nbEvals} évaluations à ${D.settings.nbEvals} stages différents, moyenne ≥ ${D.settings.seuil} %) · « à confirmer » = bon niveau mais pas encore assez d'évaluations · « fragile » = était acquise, en baisse</div></div>
+ <div class="card"><div class="lbl">Évaluations (datées)</div><table><tr><th>Date</th><th>Évaluation</th><th>Type</th><th class="c">Note /20</th><th>Remarque</th></tr>
+ ${evs.map(e=>{const r=(e.res||{})[s.id];const x=evalStudentPct(e,s.id);const grp=G(e.gid);let rem="";if(r&&r.absent)rem=r.abs==="annule"?"annulée (absent)":r.abs==="remed"?"absent · reportée à la remédiation":r.abs==="stage"?"absent · reportée au stage "+r.reportStage:"absent · à décider";if(e.statut!=="corrigee"&&!rem)rem=e.statut==="faite"?"pas encore corrigée":"à venir";
+  return `<tr><td>${fdate(e.date)}</td><td>${h(e.titre)}${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${grp.kind==="division"?"Division":"Section"}</div></td><td>${e.type}</td><td class="c">${x&&e.type==="sommative"?(Math.round(x.note20*10)/10).toString().replace(".",","):x?pct(x.note20/20)+" %":"—"}</td><td class="hint">${rem}</td></tr>`}).join("")||'<tr><td colspan="5" class="empty">Aucune évaluation.</td></tr>'}</table></div>
+ <div class="card"><div class="lbl">Absences aux séances</div>${absS.length?absS.map(x=>`<span class="tag">${seanceCode(x)} · ${fdate(x.done.date)}</span>`).join(""):'<div class="empty">Aucune absence enregistrée.</div>'}</div>`}
+function editStudent(id){const g=D.groups.find(x=>(x.students||[]).some(s=>s.id===id));const s=g.students.find(x=>x.id===id);
+ modal(`<h2>Modifier l'apprenti</h2><label class="f">Nom</label><input type="text" id="n" value="${h(s.nom)}"><label class="f">Prénom</label><input type="text" id="p" value="${h(s.prenom)}">
+ <label class="cbx" style="margin-top:12px"><input type="checkbox" id="out" ${s.actif===false?"checked":""}> Sorti(e) de la formation (rupture, abandon…) : il/elle n'apparaît plus dans les listes, son bilan est conservé.</label>
+ <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px"><button class="btn danger" id="del">🗑 Effacer définitivement cet apprenti (RGPD)</button><div class="hint">Supprime son nom et toutes ses notes. Irréversible.</div></div>`,bg=>{
+  s.nom=bg.querySelector("#n").value.trim();s.prenom=bg.querySelector("#p").value.trim();const o=bg.querySelector("#out").checked;if(o&&s.actif!==false){s.actif=false;s.sortie=today()}if(!o){s.actif=true;delete s.sortie}save("Apprenti mis à jour");render()},"Enregistrer",{init:bg=>{bg.querySelector("#del").onclick=()=>{if(!confirm("Effacer définitivement "+s.prenom+" "+s.nom+" et toutes ses notes ?"))return;g.students=g.students.filter(x=>x.id!==id);D.evals.forEach(e=>{if(e.res)delete e.res[id]});D.seances.forEach(x=>{if(x.done)x.done.absents=(x.done.absents||[]).filter(a=>a!==id)});save("Apprenti effacé");bg.remove();go("groupe")}}})}
+function exportCSV(){const g=cur();const st=studentsOf(g,true);const evs=evalsOf(g).filter(e=>e.type==="sommative"&&!e.remOf);
+ const rows=[["Nom","Prénom",...evs.map(e=>e.titre+" ("+fdate(e.date)+")"),"Moyenne /20"]];
+ st.forEach(s=>{const pts=studentEvalPoints(s);const n=studentNotes(s);rows.push([s.nom,s.prenom,...evs.map(e=>{const x=pts.find(p=>p.e.id===e.id);const r=(e.res||{})[s.id];return x?(Math.round(x.p.note20*100)/100).toString().replace(".",","):r&&r.absent?"ABS":""}),n.moy===null?"":(Math.round(n.moy*100)/100).toString().replace(".",",")])});
+ const csv="﻿"+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\r\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="Notes_"+g.name.replace(/[^\w-]+/g,"_")+"_"+today()+".csv";a.click()}
+
+function vGrille(g){const ss=seancesOf(g);const list=compList(g);const evOf=s=>D.evals.filter(e=>e.seanceId===s.id);
+ const cell=(s,code)=>{const v=(s.comps||[]).includes(code);const e=evOf(s).some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code)));return v&&e?'<td class="cVE">V E</td>':v?'<td class="cV">V</td>':e?'<td class="cE">E</td>':'<td style="color:#ccc">·</td>'};
+ const unl=D.evals.filter(e=>e.gid===g.id&&!e.seanceId);
+ const rowsH=list.map(([code,nm,f])=>{const used=ss.some(s=>(s.comps||[]).includes(code)||evOf(s).some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code))))||unl.some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code)));if(!f&&!used)return "";
+  const nv=ss.filter(s=>(s.comps||[]).includes(code)).length;const ne=ss.filter(s=>evOf(s).some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code)))).length+unl.filter(ev=>ev.ex.some(x=>(x.comps||[]).includes(code))).length;
+  return `<tr><td style="text-align:left;font-weight:600;white-space:nowrap" title="${h(nm)}">${code} <span class="hint" style="font-weight:400">${h(nm.length>32?nm.slice(0,32)+"…":nm)}</span>${!nv?' <span class="pill s0">jamais vue</span>':""}${!ne?' <span class="pill s2">jamais évaluée</span>':""}</td>${ss.map(s=>cell(s,code)).join("")}</tr>`}).join("");
+ return `<div class="head"><div><h1>Compétences de la progression</h1><div class="sub">${h(g.name)} · séances × compétences</div></div></div>
+ <div class="consigne">V = compétence vue pendant la séance · E = évaluée dans une évaluation liée à la séance. D'un coup d'œil : les compétences jamais vues ou jamais évaluées.</div>
+ ${ss.length?`<div class="tw"><table class="cgrid"><tr><th style="text-align:left">Compétence</th>${ss.map(s=>`<th class="c" title="${h(s.titre)}" style="${s.done?"":"opacity:.6"}">${seanceCode(s)}</th>`).join("")}</tr>${rowsH}</table></div>`:'<div class="card empty">Aucune séance dans la progression.</div>'}
+ ${unl.length?`<div class="hint" style="margin-top:8px">${unl.length} évaluation(s) non liée(s) à une séance, comptées dans « jamais évaluée ».</div>`:""}`}
+
+function vRemed(g){const r=g.remed||{nextAt:D.settings.pointEvery,ajourn:0,hist:[]};const p=remedProposal(g);const cs=stageOf(g,today());
+ S.after=()=>{const q=document.getElementById("qr");if(q&&D.settings.avisUrl&&window.QRCode){new QRCode(q,{text:D.settings.avisUrl,width:150,height:150})}};
+ return `<div class="head"><div><h1>Remédiations et point d'étape</h1><div class="sub">${h(g.name)} · un point d'étape tous les ${D.settings.pointEvery} stages · ${hasCal(g)?`stage actuel : ${cs||"—"} · prochain point : stage ${r.nextAt}`:"saisissez le calendrier pour activer les points d'étape"}</div></div></div>
+ ${p?`<div class="card" style="border-left:6px solid ${p.red?"var(--red)":"var(--orange)"}"><div class="lbl">Point d'étape · stage ${p.stage}${p.ajourn?` · ajourné ${p.ajourn} fois`:""}</div>
+ <h3>1. Remédiation proposée</h3>${p.groupes.length?p.groupes.map((x,i)=>`<div class="alert a-o"><span>👥</span><div><b>Groupe ${i+1} : ${x.noms.map(h).join(", ")}</b><span class="t">Compétence à retravailler : ${x.code} ${h(compName(x.code))}</span></div></div>`).join(""):'<div class="empty">Aucun jeune sous le seuil.</div>'}
+ ${p.reportes.length?`<div class="hint" style="margin-top:8px"><b>Évaluations reportées à cette remédiation :</b> ${p.reportes.map(x=>stName(x.s)+" ("+h(x.e.titre)+")").join(" · ")}</div>`:""}
+ <h3 style="margin-top:14px">2. Avis des apprentis (Qualiopi, indicateur 33)</h3>${D.settings.avisUrl?`<div class="row" style="align-items:flex-start"><div id="qr" style="background:#fff;padding:6px"></div><div class="hint" style="max-width:340px">Les apprentis scannent ce QR code avec leur téléphone pour donner leur avis sur les ${D.settings.pointEvery} derniers stages (questionnaire anonyme).<br><a href="${h(D.settings.avisUrl)}" target="_blank" rel="noopener">Ouvrir le questionnaire</a></div></div>`:`<div class="empty">Aucun questionnaire réglé. ${isAdmin()?"Ajoutez le lien de votre questionnaire (Microsoft Forms…) dans Réglages.":""}</div>`}
+ <label class="f">Synthèse des avis</label><textarea id="av" placeholder="Ce que les apprentis ont dit…"></textarea>
+ <label class="f">Action d'amélioration décidée</label><textarea id="ac" placeholder="Ce que je change dans mes séances…"></textarea>
+ <div class="row" style="margin-top:12px"><button class="btn g" onclick="remedDecide(true)">✓ Accepter et enregistrer le point d'étape</button><button class="btn" onclick="remedDecide(false)">Ajourner au stage suivant</button></div>
+ ${p.red?'<div class="hint" style="color:var(--red);margin-top:6px">⚠ Déjà ajourné 2 fois : à ne pas oublier.</div>':""}</div>`:`<div class="card empty">Pas de point d'étape en cours.</div>`}
+ <div class="card"><div class="lbl">Historique des points d'étape</div>${(r.hist||[]).length?`<table><tr><th>Date</th><th>Stage</th><th>Groupes de remédiation</th><th>Avis / action</th></tr>${r.hist.slice().reverse().map(x=>`<tr><td>${fdate(x.date)}</td><td>${x.stage}</td><td>${x.groupes.map(y=>y.noms.map(h).join(", ")+" → "+y.code).join("<br>")||"—"}</td><td>${h(x.avis||"")}${x.action?`<br><b>Action :</b> ${h(x.action)}`:""}</td></tr>`).join("")}</table>`:'<div class="empty">Aucun point d\'étape enregistré.</div>'}</div>`}
+function remedDecide(ok){const g=cur();const p=remedProposal(g);if(!p)return;const r=g.remed=g.remed||{nextAt:D.settings.pointEvery,ajourn:0,hist:[]};r.hist=r.hist||[];
+ if(ok){r.hist.push({date:today(),stage:p.stage,groupes:p.groupes,avis:(document.getElementById("av")||{}).value||"",action:(document.getElementById("ac")||{}).value||""});r.nextAt=p.stage+D.settings.pointEvery;r.ajourn=0;save("Point d'étape enregistré")}
+ else{r.ajourn=(r.ajourn||0)+1;r.nextAt=p.stage+1;save("Point d'étape ajourné au stage suivant")}render()}
+
+function vBilans(g){const st=studentsOf(g);const ss=seancesOf(g);const list=compList(g).filter(c=>c[2]);const evs=evalsOf(g);const r=g.remed||{hist:[]};
+ const nv=list.filter(([code])=>!ss.some(s=>(s.comps||[]).includes(code)));const ne=list.filter(([code])=>!evs.some(e=>e.ex.some(x=>(x.comps||[]).includes(code))));
+ const hard=[];evs.filter(e=>e.statut==="corrigee").forEach(e=>e.ex.forEach(x=>{let n=0,low=0;st.forEach(s=>{const rr=(e.res||{})[s.id];if(!rr||rr.absent||!rr.sc||rr.sc[x.id]===undefined||rr.sc[x.id]==="")return;n++;if(+rr.sc[x.id]<x.bareme/2)low++});if(n&&low/n>.5)hard.push(e.titre+" · "+x.label+" ("+low+"/"+n+")")}));
+ return `<div class="head"><div><h1>Bilans</h1><div class="sub">${h(g.name)} · preuves pour l'audit Qualiopi : bilans individuels + bilan de formation</div></div><button class="btn n" onclick="window.print()">🖨 Imprimer le bilan de formation</button></div>
+ <div class="card"><div class="lbl">Bilans individuels</div><div class="studs">${st.map(s=>`<div class="stc" onclick="go('eleve','${s.id}')"><div class="av" style="background:${(METIERS[s.metier]||{}).color||"#1f5fa8"}">${initials(s)}</div>${h(s.prenom)} ${h(s.nom)}<div class="hint">ouvrir · imprimer</div></div>`).join("")||'<div class="empty">Aucun apprenti.</div>'}</div></div>
+ <div class="card"><div class="lbl">Bilan de formation · ${h(g.name)} · ${new Date().toLocaleDateString("fr-FR")}</div>
+ <table><tr><td>Séances faites</td><td><b>${ss.filter(s=>s.done).length} / ${ss.length}</b></td></tr>
+ <tr><td>Évaluations corrigées</td><td><b>${evs.filter(e=>e.statut==="corrigee").length} / ${evs.length}</b></td></tr>
+ <tr><td>Compétences jamais vues</td><td>${nv.map(c=>c[0]).join(", ")||"aucune ✓"}</td></tr>
+ <tr><td>Compétences jamais évaluées</td><td>${ne.map(c=>c[0]).join(", ")||"aucune ✓"}</td></tr>
+ <tr><td>Exercices réussis par moins de la moitié du groupe</td><td>${hard.map(h).join("<br>")||"aucun"}</td></tr>
+ <tr><td>Points d'étape (remédiation + avis apprentis)</td><td>${(r.hist||[]).length}</td></tr></table>
+ ${(r.hist||[]).length?`<h3 style="margin-top:12px">Avis des apprentis et actions d'amélioration</h3>${r.hist.map(x=>`<div class="hint" style="margin:4px 0"><b>${fdate(x.date)} (stage ${x.stage})</b> · ${h(x.avis||"—")}${x.action?` · <b>Action :</b> ${h(x.action)}`:""}</div>`).join("")}`:""}</div>`}
+
+function vCalendrier(g){const cal=g.calendar||[];
+ return `<div class="head"><div><h1>Calendrier des stages</h1><div class="sub">${h(g.name)} · ${cal.length} stage(s)</div></div></div>
+ <div class="consigne">Saisissez une fois, en début d'année, les dates où le groupe est au CFA (d'après le planning du CFA). Le calendrier déclenche les alertes « à corriger » et les points d'étape. Il est séparé de la progression : une séance peut être faite au stage que vous voulez.${g.kind==="division"?" Une division sans calendrier utilise celui de son premier groupe.":""}</div>
+ <div class="card"><table id="calt"><tr><th>Stage</th><th>Début</th><th>Fin</th><th></th></tr>${cal.map((c,i)=>`<tr><td><b>Stage ${i+1}</b></td><td><input type="date" data-i="${i}" data-k="debut" value="${c.debut||""}"></td><td><input type="date" data-i="${i}" data-k="fin" value="${c.fin||""}"></td><td><button class="btn s danger" onclick="calDel(${i})">✕</button></td></tr>`).join("")}</table>
+ <div class="row" style="margin-top:10px"><button class="btn" onclick="calAdd()">➕ Ajouter un stage</button><button class="btn p" onclick="calSave()">Enregistrer</button></div></div>`}
+function calRead(){const g=cur();g.calendar=g.calendar||[];document.querySelectorAll("#calt input").forEach(i=>{g.calendar[+i.dataset.i][i.dataset.k]=i.value})}
+function calAdd(){const g=cur();calRead();const last=g.calendar[g.calendar.length-1];let d="";if(last&&last.debut){const x=new Date(last.debut+"T12:00");x.setDate(x.getDate()+21);d=x.toISOString().slice(0,10)}g.calendar.push({debut:d,fin:""});render()}
+function calDel(i){const g=cur();calRead();g.calendar.splice(i,1);save();render()}
+function calSave(){const g=cur();calRead();g.calendar.sort((a,b)=>(a.debut||"z")<(b.debut||"z")?-1:1);save("Calendrier enregistré");render()}
+
+function vGroupes(){const groups=D.groups;
+ return `<div class="head"><div><h1>Mes groupes</h1><div class="sub">Choisissez un groupe, ou créez-en un.</div></div>${isAdmin()?`<button class="btn p" onclick="go('nouveau')">➕ Nouveau groupe</button>`:""}</div>
+ <div class="card"><div class="lbl">CAP</div><table>${groups.map(x=>`<tr style="${x.archive?"opacity:.5":""}"><td>${x.kind==="division"?"🏗️":"🔧"} <b>${h(x.name)}</b><div class="hint">${x.kind==="division"?"Division · "+memberGroups(x).map(m=>h(m.name)).join(", "):"Section · CAP "+h(x.metier)} · ${studentsOf(x).length} apprentis${x.archive?" · archivé":""}</div></td><td style="text-align:right"><button class="btn s p" onclick="S.gid='${x.id}';go('accueil')">Ouvrir</button></td></tr>`).join("")||'<tr><td class="empty">Aucun groupe.</td></tr>'}</table>
+ <div class="hint" style="margin-top:8px">Les BP, les CS et les autres métiers CAP apparaîtront ici quand leurs référentiels seront ajoutés.</div></div>`}
+function vNouveau(){if(!isAdmin())return vGroupes();const sec=D.groups.filter(x=>x.kind!=="division");
+ S.after=()=>{const k=document.getElementById("g_k");const upd=()=>{document.getElementById("g_mem").style.display=k.value==="division"?"block":"none";document.getElementById("g_met").style.display=k.value==="division"?"none":"block"};k.onchange=upd;upd()};
+ return `<div class="head"><div><h1>Nouveau groupe</h1><div class="sub">4 étapes courtes</div></div></div>
+ <div class="card"><label class="f">① Diplôme et type</label><div class="row"><select id="g_d" style="flex:1"><option>CAP</option></select><select id="g_k" style="flex:1"><option value="metier">Groupe métier (section)</option><option value="division">Division (plusieurs groupes réunis)</option></select></div>
+ <div id="g_met"><label class="f">Métier</label><select id="g_m"><option value="MIS">MIS · Monteur en installations sanitaires</option></select><div class="hint">Phase de test : CAP MIS uniquement. Les autres métiers s'ajouteront avec leurs référentiels.</div></div>
+ <div id="g_mem"><label class="f">Groupes réunis dans la division</label>${sec.map(x=>`<label class="cbx"><input type="checkbox" name="mem" value="${x.id}"> ${h(x.name)}</label>`).join("")||'<div class="empty">Créez d\'abord vos groupes métier, puis la division.</div>'}</div>
+ <label class="f">② Nom du groupe et année</label><div class="row"><input type="text" id="g_n" placeholder="ex. Groupe 1 · 1re année MIS" style="flex:2"><select id="g_a" style="flex:1"><option value="1">1re année</option><option value="2">2e année</option></select></div>
+ <div id="g_st"><label class="f">③ Les apprentis (facultatif, possible plus tard)</label><textarea id="g_l" placeholder="DUPONT ; Léa&#10;MARTIN ; Tom"></textarea><div class="hint">Un apprenti par ligne : Nom ; Prénom. Pour une division, les apprentis viennent des groupes cochés.</div></div>
+ <label class="f">④ Progression</label><div class="hint">Vous la construirez dans « Progression », ou vous la reprendrez d'un autre groupe.</div>
+ <div class="row" style="margin-top:14px"><button class="btn p" onclick="createGroup()">Créer le groupe</button><button class="btn" onclick="go('accueil')">Annuler</button></div></div>`}
+function createGroup(){const k=document.getElementById("g_k").value;const n=document.getElementById("g_n").value.trim();if(!n){alert("Donnez un nom au groupe.");return}
+ const g={id:uid(),name:n,diplome:"CAP",kind:k,annee:+document.getElementById("g_a").value,calendar:[],remed:{nextAt:D.settings.pointEvery,ajourn:0,hist:[]},students:[]};
+ if(k==="division"){g.members=[...document.querySelectorAll("input[name=mem]:checked")].map(i=>i.value);if(!g.members.length){alert("Cochez au moins un groupe métier.");return}}
+ else{g.metier=document.getElementById("g_m").value;document.getElementById("g_l").value.split(/\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{const p=l.split(/[;\t,]/).map(x=>x.trim());g.students.push({id:uid(),nom:p[0],prenom:p[1]||"",actif:true,entree:today()})})}
+ D.groups.push(g);S.gid=g.id;save("Groupe créé");go("calendrier")}
+function groupSettings(){const g=cur();const sec=D.groups.filter(x=>x.kind!=="division"&&x.id!==g.id);
+ modal(`<h2>Réglages du groupe</h2><label class="f">Nom du groupe</label><input type="text" id="n" value="${h(g.name)}">
+ ${g.kind==="division"?`<label class="f">Groupes réunis</label>${sec.map(x=>`<label class="cbx"><input type="checkbox" name="mem" value="${x.id}" ${(g.members||[]).includes(x.id)?"checked":""}> ${h(x.name)}</label>`).join("")}`:""}
+ <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><b>Fin d'année</b><div class="hint">Passer le groupe en ${g.annee===1?"2e":"année suivante"} : mêmes jeunes, tout l'historique conservé. Le nom est mis à jour (1re → 2e année).</div><button class="btn s n" id="pass" style="margin-top:6px">⏭ Passer à l'année suivante</button></div>
+ <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><button class="btn s" id="arch">${g.archive?"Désarchiver":"🗄 Archiver le groupe"}</button> <button class="btn s danger" id="del">🗑 Supprimer le groupe</button><div class="hint">Archiver : le groupe disparaît du sélecteur, ses bilans restent. Supprimer : tout est effacé.</div></div>`,bg=>{
+  g.name=bg.querySelector("#n").value.trim()||g.name;if(g.kind==="division")g.members=[...bg.querySelectorAll("input[name=mem]:checked")].map(i=>i.value);save("Groupe mis à jour");render()},"Enregistrer",{init:bg=>{
+  bg.querySelector("#pass").onclick=()=>{if(!confirm("Passer « "+g.name+" » à l'année suivante ?"))return;g.annee=(g.annee||1)+1;g.name=g.name.replace(/1(re|ère|ere) année/i,"2e année").replace(/1A\b/,"2A");if(!/2e année/.test(g.name)&&g.annee===2)g.name+=" · 2e année";g.calendar=[];g.remed={nextAt:D.settings.pointEvery,ajourn:0,hist:(g.remed||{}).hist||[]};save("Groupe passé en "+g.annee+"e année : saisissez le nouveau calendrier");bg.remove();go("calendrier")};
+  bg.querySelector("#arch").onclick=()=>{g.archive=!g.archive;save(g.archive?"Groupe archivé":"Groupe désarchivé");bg.remove();if(g.archive){S.gid=(D.groups.find(x=>!x.archive)||{}).id||null}go("accueil")};
+  bg.querySelector("#del").onclick=()=>{if(!confirm("Supprimer définitivement « "+g.name+" », ses séances, évaluations et notes ?"))return;D.seances=D.seances.filter(s=>s.gid!==g.id);D.evals=D.evals.filter(e=>e.gid!==g.id);D.groups=D.groups.filter(x=>x.id!==g.id);D.groups.forEach(x=>{if(x.members)x.members=x.members.filter(m=>m!==g.id)});S.gid=(D.groups[0]||{}).id||null;save("Groupe supprimé");bg.remove();go("accueil")}}})}
+
+function vReglages(){if(!isAdmin())return '<div class="card">Réservé à l\'administrateur.</div>';const s=sec();const st=D.settings;
+ return `<div class="head"><div><h1>Réglages</h1><div class="sub">Réservé à l'administrateur</div></div></div>
+ <div class="card"><div class="lbl">Règles de calcul</div><div class="row"><div style="flex:1;min-width:160px"><label class="f">Seuil « Acquise » (%)</label><input type="number" id="r_s" value="${st.seuil}" min="50" max="100"></div>
+ <div style="flex:1;min-width:160px"><label class="f">Évaluations nécessaires</label><input type="number" id="r_n" value="${st.nbEvals}" min="1" max="6"><div class="hint">Le niveau = moyenne des N dernières, à N stages différents.</div></div>
+ <div style="flex:1;min-width:160px"><label class="f">Point d'étape tous les … stages</label><input type="number" id="r_p" value="${st.pointEvery}" min="2" max="8"></div></div>
+ <label class="f">Lien du questionnaire d'avis des apprentis (Microsoft Forms…)</label><input type="url" id="r_u" value="${h(st.avisUrl)}" placeholder="https://forms.office.com/…">
+ <div class="row" style="margin-top:12px"><button class="btn p" onclick="saveSettings()">Enregistrer</button></div></div>
+ <div class="card"><div class="lbl">Codes d'accès</div>
+ <div class="row"><button class="btn" onclick="changeAdmin()">🔑 Changer mon code administrateur</button><button class="btn" onclick="setRemp()">👤 ${s.remp?"Changer":"Créer"} le code remplaçant</button>${s.remp?`<button class="btn danger" onclick="delRemp()">Désactiver le code remplaçant</button>`:""}</div>
+ <div class="hint" style="margin-top:6px">Code remplaçant (6 chiffres) : il ouvre les séances et les documents et permet de saisir les notes, mais pas de supprimer ni de modifier les réglages. ${s.remp?"<b>Actif.</b>":"Aucun code remplaçant actif."}</div></div>
+ <div class="card"><div class="lbl">Données</div>
+ <div class="row"><button class="btn" onclick="exportFile()">💾 Sauvegarder dans un fichier</button><button class="btn" onclick="importFile()">📂 Ouvrir un fichier de suivi</button>${window.showSaveFilePicker?`<button class="btn n" onclick="linkFile()">🔗 Lier un fichier (enregistrement automatique)</button><button class="btn" onclick="openLinkedFile()">📂 Ouvrir et lier un fichier existant</button>`:""}</div>
+ <div class="hint" style="margin-top:6px">Les données sont enregistrées sur cet appareil. Pour les retrouver sur un autre appareil (PC ↔ tablette), sauvegardez dans un fichier rangé dans votre OneDrive, puis ouvrez ce fichier sur l'autre appareil.${window.showSaveFilePicker?" Sur ce PC, « Lier un fichier » enregistre automatiquement chaque modification dans le fichier choisi (par exemple dans votre dossier OneDrive).":""}</div>
+ <div class="row" style="margin-top:12px"><button class="btn" onclick="loadDemo()">🧪 Charger le groupe de démonstration</button><button class="btn danger" onclick="wipe()">🗑 Effacer toutes les données</button></div></div>`}
+function saveSettings(){const $=id=>document.getElementById(id),r_s=$('r_s'),r_n=$('r_n'),r_p=$('r_p'),r_u=$('r_u');const st=D.settings;st.seuil=+r_s.value||75;st.nbEvals=+r_n.value||3;st.pointEvery=+r_p.value||4;const u=r_u.value.trim();if(u&&!/^https?:\/\//.test(u)){alert("Le lien doit commencer par https://");return}st.avisUrl=u;save("Réglages enregistrés");render()}
+function changeAdmin(){modal(`<h2>Changer le code administrateur</h2><label class="f">Code actuel</label><input type="password" id="a0"><label class="f">Nouveau code (8 caractères min., lettres + chiffres)</label><input type="password" id="a1"><label class="f">Retapez le nouveau code</label><input type="password" id="a2">`,bg=>{(async()=>{const s=sec();if(await hash(bg.querySelector("#a0").value)!==s.admin){alert("Code actuel incorrect.");return}const a=bg.querySelector("#a1").value;if(a.length<8||!/[a-zA-Z]/.test(a)||!/\d/.test(a)){alert("8 caractères minimum, avec des lettres et des chiffres.");return}if(a!==bg.querySelector("#a2").value){alert("Les deux codes ne sont pas identiques.");return}s.admin=await hash(a);setSec(s);bg.remove();toast("Code administrateur changé")})();return false})}
+function setRemp(){modal(`<h2>Code remplaçant</h2><div class="consigne">6 chiffres. Donnez-le au collègue qui vous remplace, puis changez-le ou désactivez-le à votre retour.</div><input type="password" id="r1" inputmode="numeric" maxlength="6">`,bg=>{(async()=>{const v=bg.querySelector("#r1").value;if(!/^\d{6}$/.test(v)){alert("Le code remplaçant doit faire exactement 6 chiffres.");return}const s=sec();if(await hash(v)===s.admin){alert("Choisissez un code différent du code administrateur.");return}s.remp=await hash(v);setSec(s);bg.remove();toast("Code remplaçant enregistré");render()})();return false})}
+function delRemp(){const s=sec();delete s.remp;setSec(s);toast("Code remplaçant désactivé");render()}
+function wipe(){if(!confirm("Effacer TOUTES les données de cet appareil (groupes, apprentis, notes) ? Pensez à sauvegarder avant."))return;if(!confirm("Dernière confirmation : tout effacer ?"))return;D=blank();S.gid=null;save("Données effacées");go("accueil")}
+
+/* ===================== Démonstration ===================== */
+function loadDemo(){if(D.groups.some(g=>g.demo)&&!confirm("Un groupe de démonstration existe déjà. En recréer un ?"))return;
+ const base=new Date();base.setDate(base.getDate()-7*3*5-3);const cal=[];for(let i=0;i<13;i++){const d=new Date(base);d.setDate(d.getDate()+i*21);const f=new Date(d);f.setDate(f.getDate()+4);cal.push({debut:d.toISOString().slice(0,10),fin:f.toISOString().slice(0,10)})}
+ const names=[["MARTIN","Léa"],["BERNARD","Tom"],["PETIT","Inès"],["DUBOIS","Hugo"],["MOREAU","Sami"],["LAURENT","Noé"],["SIMON","Jade"],["MICHEL","Adam"]];
+ const sec_={id:uid(),name:"Démo · Groupe 1 · 1re année MIS",diplome:"CAP",kind:"metier",metier:"MIS",annee:1,demo:true,calendar:cal,remed:{nextAt:4,ajourn:1,hist:[]},students:names.map(([n,p])=>({id:uid(),nom:n,prenom:p,actif:true,entree:cal[0].debut}))};
+ const div={id:uid(),name:"Démo · Division 1re année",diplome:"CAP",kind:"division",members:[sec_.id],annee:1,demo:true,calendar:cal,remed:{nextAt:4,ajourn:0,hist:[]},students:[]};
+ D.groups.push(sec_,div);
+ const mk=(g,num,part,titre,comps,done)=>{const s={id:uid(),gid:g.id,num,part,titre,comps,ordre:num*2+(part==="S"?1:0),docs:[{type:"support",kind:"Dossier apprenant",label:"Dossier apprenant (exemple)",url:"https://onedrive.live.com/"},{type:"synthese",kind:"Fiche synthèse",label:"Fiche synthèse S-"+String(num).padStart(2,"0"),url:"https://onedrive.live.com/"},{type:"formateur",kind:"Corrigé",label:"Guide et corrigés",url:"https://onedrive.live.com/"}],done:done?{date:cal[num-1].debut,absents:[]}:null,annee:1};D.seances.push(s);return s};
+ const sd=[[1,"Accueil et lecture de plans",["C2.1"]],[2,"Les intervenants de la construction",["C1.1","C1.2"]],[3,"Les relevés de mesures",["C2.1","C2.2"]],[4,"Le dossier de consultation",["C2.1","C1.1"]],[5,"Échelles et conventions",["C2.1"]],[6,"Plan de masse, plan de niveau",["C2.1","C1.1"]],[7,"Fondations et réservations",["C2.1","C2.3"]],[8,"Façades et hauteurs",["C2.1","C4.1"]]];
+ const DS={},SS={};sd.forEach(([n,t,c])=>{DS[n]=mk(div,n,"D",t,c,n<=5);SS[n]=mk(sec_,n,"S",t+" · plomberie",c.concat(n%2?["C2.2"]:["C2.3"]),n<=5)});
+ DS[5].done.absents=[sec_.students[1].id];
+ const rnd=(a,b)=>Math.round((a+Math.random()*(b-a))*2)/2;
+ const lvl=[.85,.45,.6,.9,.75,.7,.55,.95];
+ const mkE=(g,seance,titre,type,ex,stg,statut)=>{const e={id:uid(),gid:g.id,seanceId:seance.id,titre,type,date:cal[stg-1].debut,statut,ex:ex.map(([l,b,c])=>({id:uid(),label:l,bareme:b,comps:c})),res:{},log:[]};
+  if(statut!=="a_faire")sec_.students.forEach((s,i)=>{if(statut==="faite"&&i>2)return;const r={sc:{}};e.ex.forEach(x=>{r.sc[x.id]=Math.max(0,Math.min(x.bareme,rnd(x.bareme*(lvl[i]-.2),x.bareme*(lvl[i]+.15))))});e.res[s.id]=r});D.evals.push(e);return e};
+ mkE(div,DS[1],"Test de positionnement","diagnostique",[["Lire un plan",10,["C2.1"]],["Repérer les pièces",10,["C2.1"]]],1,"corrigee");
+ mkE(div,DS[2],"Les intervenants","formative",[["Associer les intervenants",6,["C1.1"]],["Expliquer son rôle",4,["C1.2"]]],2,"corrigee");
+ mkE(sec_,SS[3],"Relevé d'une installation","sommative",[["Lire le plan de plomberie",6,["C2.1"]],["Choisir les outils de mesure",4,["C2.1","C2.2"]],["Compléter la fiche de relevé",10,["C1.1"]]],3,"corrigee");
+ const e4=mkE(div,DS[4],"Le dossier de consultation","sommative",[["Retrouver une info dans le CCTP",8,["C2.1"]],["Compléter le tableau",12,["C1.1"]]],4,"corrigee");
+ e4.res[sec_.students[4].id]={absent:true,sc:{}};
+ mkE(sec_,SS[5],"Échelles et mesures","sommative",[["Mesurer sur plan",10,["C2.1"]],["Choisir le matériel",10,["C2.2"]]],5,"faite");
+ mkE(div,DS[6],"Plan de masse","sommative",[["Lire le plan de masse",10,["C2.1"]],["Compléter la légende",10,["C1.1"]]],6,"a_faire").date="";
+ S.gid=div.id;save("Groupe de démonstration chargé");go("accueil")}
+
+/* ===================== Démarrage ===================== */
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+(async()=>{try{if(window.showSaveFilePicker)await idbGet("file").then(hd=>{if(hd)S.pendingFile=hd})}catch(e){}renderLock()})();
+const _start=start;start=function(){_start();if(S.pendingFile&&!fileHandle){const hd=S.pendingFile;S.pendingFile=null;const b=document.createElement("div");b.className="ok-msg";b.style.cursor="pointer";b.innerHTML="🔗 Cliquez ici pour reconnecter votre fichier de suivi";b.onclick=async()=>{b.remove();if(await reconnectFile()){toast("Fichier reconnecté");render()}};document.body.appendChild(b);setTimeout(()=>b.remove(),15000)}};
+</script>
+</body>
+</html>
