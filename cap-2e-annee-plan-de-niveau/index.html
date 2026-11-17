@@ -40,7 +40,7 @@ select{background:#ffffff33}select option{color:#000}
  <button id="bWalk" class="on">🚶 À pied</button><button id="bOrbit">🔄 Vue extérieure</button><button id="bTop">🗺️ Vue du dessus</button>
  <button id="bRoof" class="on">🏠 Toit</button><button id="bLab">🏷️ Étiquettes</button><button id="bMeas">📏 Mesurer</button>
  <select id="tp"><option value="">Aller à…</option></select>
- <button id="bHelp">❓</button><button id="bCor" style="display:none">✅ Corrigé</button>
+ <button id="bHelp">❓</button>
 </div>
 <div id="joy"><div id="knob"></div></div><div id="info"></div>
 <div id="hud"></div>
@@ -738,13 +738,13 @@ tp.onchange=()=>{if(tp.value==='')return;const a=[[2.0,11.3,0,Math.PI],[3.2,2.0,
 function corHtml(){return `<h2>Corrigé – jeu d'erreurs (${ERRS.length} écarts)</h2><p style="font-size:12px;color:#555">Réservé à l'enseignant. Les pastilles rouges numérotées sont affichées dans la scène.</p>`+ERRS.map(e=>`<div class="e"><b>${e.n}. ${e.t}</b><br>Visite : ${e.v}<br>Plan : ${e.pl} <i>(${e.sh})</i></div>`).join('')+`<p><button id="bConf" style="background:#1F3A5F;color:#fff">Basculer vers la version conforme aux plans</button></p>`}
 function initCor(){ $('bCor').style.display='inline-block';
  $('bCor').onclick=()=>{showCor=!showCor;$('bCor').classList.toggle('on',showCor);panel.style.display=showCor?'block':'none';if(showCor){panel.innerHTML=corHtml();$('bConf').onclick=()=>{showErr=!showErr;build(showErr);$('bConf').textContent=showErr?'Basculer vers la version conforme aux plans':'Revenir à la version avec erreurs';}}};}
-if(location.hash.indexOf('corrige')>=0)initCor();
+
 build(true);
 // paramètres de test : #cam=x,y,z,yaw,pitch
 (function(){const m=location.hash.match(/cam=([-\d.,]+)/);if(m){const a=m[1].split(',').map(Number);cam.x=a[0];cam.y=a[1];cam.z=a[2];cam.yaw=a[3];cam.pitch=a[4]||0;}
  const o=location.hash.match(/orbit=([-\d.,]+)/);if(o){const a=o[1].split(',').map(Number);setMode('orbit');cam.az=a[0];cam.el=a[1];cam.dist=a[2];}
  if(location.hash.indexOf('noroof')>=0){showRoof=false;$('bRoof').classList.remove('on');}
- if(location.hash.indexOf('cor=1')>=0){showCor=true;}})();
+ })();
 toast('Joystick = marcher · glisser = regarder · toucher un élément = infos',6000);
 requestAnimationFrame(loop);
 </script></body></html>
