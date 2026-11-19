@@ -156,9 +156,29 @@ const REF = {
   ["C4.1","Contrôler le travail réalisé",1],
   ["C4.2","Réaliser une mise en service",0],
   ["C4.3","Appliquer une procédure de maintenance préventive",0],
-  ["C4.4","Effectuer une opération de maintenance corrective",0]]}
+  ["C4.4","Effectuer une opération de maintenance corrective",0]]},
+ CV:{nom:"CAP Couvreur", comps:[
+  ["C1.1","Compléter et transmettre des documents",1],
+  ["C1.2","Échanger et rendre compte oralement",1],
+  ["C2.1","Décoder un dossier technique",1],
+  ["C2.2","Choisir les matériels et les outillages",1],
+  ["C2.3","Déterminer des quantités de matériaux",1],
+  ["C3.1","Organiser son poste de travail",0],
+  ["C3.2","Sécuriser son intervention",0],
+  ["C3.3","Intervenir à proximité des réseaux",0],
+  ["C3.4","Monter, démonter et utiliser des échafaudages",0],
+  ["C3.5","Réaliser des tracés",1],
+  ["C3.6","Poser des éléments constituant une couverture, un bardage",0],
+  ["C3.7","Relever des dimensions",1],
+  ["C3.8","Réaliser des éléments métalliques",0],
+  ["C3.9","Assembler des éléments",0],
+  ["C3.10","Raccorder des pénétrations continues, discontinues et des accessoires en petits éléments de couverture",0],
+  ["C4.1","Contrôler le travail réalisé",1],
+  ["C4.2","Poser des feuilles et longues feuilles en couverture et bardage",0],
+  ["C4.3","Sceller et étancher par mortier",0],
+  ["C4.4","Mettre en œuvre des membranes d'étanchéité",0]]}
 };
-const METIERS = {MIS:{label:"MIS",color:"#1f5fa8"}};
+const METIERS = {MIS:{label:"MIS",color:"#1f5fa8"},CV:{label:"CV",color:"#7A4FA0"}};
 const DOC_TYPES = {support:"Supports pédagogiques",synthese:"Fiches synthèse",formateur:"Formateur"};
 const DOC_ICONS = {"Dossier apprenant":"📘","Ressources":"📎","Planches":"🗺️","Maquette":"🧱","Visite virtuelle":"🥽","Évaluation":"✏️","Fiche synthèse":"🧩","Corrigé":"🔒","Autre":"📄"};
 const EVAL_TYPES = {diagnostique:"Diagnostique (positionnement, non notée)",formative:"Formative (fait progresser, non notée)",sommative:"Sommative (compte dans la note)"};
@@ -247,8 +267,18 @@ function studentsOf(g,all){let st=[];memberGroups(g).forEach(m=>(m.students||[])
 function groupsOfStudent(st){const own=D.groups.find(g=>(g.students||[]).some(s=>s.id===st.id));if(!own)return [];return [own,...D.groups.filter(g=>g.kind==="division"&&(g.members||[]).includes(own.id))]}
 function findStudent(id){for(const g of D.groups)for(const s of g.students||[])if(s.id===id)return Object.assign({grp:g.id,metier:g.metier},s);return null}
 function related(g){if(g.kind==="division")return [g,...memberGroups(g)];return [g,...D.groups.filter(x=>x.kind==="division"&&(x.members||[]).includes(g.id))]}
-function compList(g){const m=g.kind==="division"?(memberGroups(g)[0]||{}).metier||"MIS":g.metier||"MIS";return (REF[m]||REF.MIS).comps}
-function compName(code){for(const k in REF){const c=REF[k].comps.find(c=>c[0]===code);if(c)return c[1]}return code}
+/* Codes qui désignent la même compétence en MIS et en CV. Les autres codes (ex. C3.7) ont un sens différent selon le métier : dans une division mixte, ils sont cochés par métier (clé "CV:C3.7"). */
+const SHARED=["C1.1","C1.2","C2.1","C2.2","C2.3","C3.2","C4.1"];
+function normKey(k,m){if(k.includes(":")){const [km,c]=k.split(":");return km===(m||"MIS")?c:null}return k}
+function keyLabel(k){return k.includes(":")?k.replace(":"," "):k}
+function compListM(m){return (REF[m]||REF.MIS).comps}
+function metiersOf(g){const ms=[...new Set(memberGroups(g).map(x=>x.metier||"MIS"))];return ms.length?ms:["MIS"]}
+/* Liste des compétences d'un groupe : pour une division MIS + CV, union des référentiels (même code = même compétence, intitulé propre à chaque métier) */
+function compList(g){const ms=metiersOf(g);if(ms.length===1)return compListM(ms[0]);const map=new Map();
+ ms.forEach(m=>compListM(m).forEach(([c,n,f])=>{const key=SHARED.includes(c)?c:m+":"+c;const o=map.get(key)||{names:[],f:0,ms:[]};if(!o.names.some(x=>x[1]===n))o.names.push([m,n]);o.f=o.f||f;o.ms.push(m);map.set(key,o)}));
+ const num=k=>{const c=k.split(":").pop();return c.slice(1).split(".").map(Number).concat([k.includes(":")?k.split(":")[0]:""])};
+ return [...map.entries()].sort((a,b)=>{const x=num(a[0]),y=num(b[0]);return x[0]-y[0]||x[1]-y[1]||(x[2]<y[2]?-1:1)}).map(([c,o])=>[c,o.names.length>1?o.names.map(([m,n])=>m+" : "+n).join(" / "):o.names[0][1],o.f])}
+function compName(code,g){const l=g?compList(g):null;if(l){const c=l.find(c=>c[0]===code);if(c)return c[1]}for(const k in REF){const c=REF[k].comps.find(c=>c[0]===code);if(c)return c[1]}return code}
 function seancesOf(g){return D.seances.filter(s=>s.gid===g.id).sort((a,b)=>a.ordre-b.ordre)}
 function evalsOf(g){return D.evals.filter(e=>e.gid===g.id).sort((a,b)=>(a.date||"9")<(b.date||"9")?-1:1)}
 const byDate=(a,b)=>(a.date||"9")<(b.date||"9")?-1:1;
@@ -271,14 +301,15 @@ function studentEvalPoints(st){ // liste des résultats pris en compte
  evs.filter(e=>!e.remOf).forEach(e=>{const r=(e.res||{})[st.id];let p=evalStudentPct(e,st.id);let from=e;const rems=remByOrig[e.id]||[];
   if(r&&r.absent&&r.abs==="annule")return;
   rems.forEach(x=>{if(!p||x.p.note20>p.note20){p=x.p;from=x.e}});
+  if(p){const nc={};for(const k in p.comps){const c=normKey(k,st.metier);if(c)nc[c]=p.comps[k]}p=Object.assign({},p,{comps:nc})}
   if(!p)return;out.push({e,from,p,date:from.date||e.date,stage:stageOf(G(e.gid),from.date||e.date||today())})});
  return out}
 function compStates(st,g){
  const set=D.settings;const pts=studentEvalPoints(st);const res={};
- const list=compList(g||groupsOfStudent(st)[0]||{metier:"MIS"});
+ const list=compListM(st.metier||"MIS");
  const gs=groupsOfStudent(st).map(x=>x.id);
  const seen={},missed={};
- D.seances.filter(s=>gs.includes(s.gid)&&s.done).forEach(s=>{const abs=(s.done.absents||[]).includes(st.id);(s.comps||[]).forEach(c=>{if(abs)missed[c]=(missed[c]||[]).concat(s);else seen[c]=true})});
+ D.seances.filter(s=>gs.includes(s.gid)&&s.done&&!(st.entree&&s.done.date<st.entree)).forEach(s=>{const abs=(s.done.absents||[]).includes(st.id);(s.comps||[]).map(k=>normKey(k,st.metier)).filter(Boolean).forEach(c=>{if(abs)missed[c]=(missed[c]||[]).concat(s);else seen[c]=true})});
  list.forEach(([code])=>{
   const p=pts.filter(x=>x.e.type!=="diagnostique"&&x.p.comps[code]!==undefined).sort((a,b)=>(a.date||"")<(b.date||"")?-1:1);
   const diag=pts.filter(x=>x.e.type==="diagnostique"&&x.p.comps[code]!==undefined).map(x=>x.p.comps[code]);
@@ -336,7 +367,7 @@ function renderSide(){const g=cur();const el=document.getElementById("side");if(
  ${isAdmin()?`<div class="it add" onclick="go('nouveau')">➕ Nouveau groupe</div>`:""}<div class="it" onclick="go('groupes')">🧭 Tous mes groupes</div></div>`:"";
  const nav=[["accueil","🏠","Accueil"],["progression","📅","Progression"],["evals","✏️","Évaluations"],["groupe","👥","Mon groupe"],["grille","🧩","Compétences"],["remed","🔁","Remédiations"],["bilans","📄","Bilans"],["calendrier","🗓️","Calendrier"],["reglages","⚙️","Réglages"]];
  el.innerHTML=`<div class="logo"><div class="m">${houseSvg()}</div><div><b>Au p'tit pédago</b><span>Suivi des apprentis</span></div></div>
- <div class="sel" onclick="S.ddOpen=!S.ddOpen;renderSide();event.stopPropagation()"><div class="cur">${g?icon(g):"➕"}<div>${g?h(g.name):"Choisir un groupe"}<small>${g?(g.kind==="division"?"CAP · division · ":"CAP · section · ")+studentsOf(g).length+" apprentis":"ou en créer un"}</small></div><span class="chev">${S.ddOpen?"▴":"▾"}</span></div>${dd}</div>
+ <div class="sel" onclick="S.ddOpen=!S.ddOpen;renderSide();event.stopPropagation()"><div class="cur">${g?icon(g):"➕"}<div>${g?h(g.name):"Choisir un groupe"}<small>${g?(g.kind==="division"?"CAP "+metiersOf(g).join("+")+" · division · ":"CAP "+(g.metier||"MIS")+" · section · ")+studentsOf(g).length+" apprentis":"ou en créer un"}</small></div><span class="chev">${S.ddOpen?"▴":"▾"}</span></div>${dd}</div>
  <nav>${nav.map(([v,i,l])=>`<a class="${S.view===v||(v==="evals"&&["evaledit","saisie"].includes(S.view))||(v==="progression"&&S.view==="seance")||(v==="groupe"&&S.view==="eleve")?"on":""} ${!g&&!["reglages"].includes(v)?"off":""} ${v==="reglages"&&!isAdmin()?"off":""} ${v==="calendrier"&&!isAdmin()?"off":""}" onclick="go('${v}')"><span class="ic">${i}</span>${l}</a>`).join("")}</nav>
  <div class="side-foot" id="sidefoot"></div>`;renderSideFoot()}
 function renderSideFoot(){const el=document.getElementById("sidefoot");if(!el)return;const u=D.updated?new Date(D.updated).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}):"jamais";
@@ -367,8 +398,8 @@ function vAccueil(g){
  <div class="grid2"><div>
  <div class="card next"><div class="lbl">Séance proposée</div>
  ${s?`<h2>${seanceCode(s)} <small>· ${h(s.titre)}</small></h2>
-  <div style="margin:6px 0 2px"><b style="font-size:12.5px;color:var(--mut)">Compétences vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v" title="${h(compName(c))}">${c} ${h(compName(c))}</span>`).join("")||'<span class="empty">aucune cochée</span>'}</div>
-  <div><b style="font-size:12.5px;color:var(--mut)">Compétences évaluées :</b> ${evComps.map(c=>`<span class="tag e">${c}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div>
+  <div style="margin:6px 0 2px"><b style="font-size:12.5px;color:var(--mut)">Compétences vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v" title="${h(compName(c,g))}">${keyLabel(c)} ${h(compName(c,g))}</span>`).join("")||'<span class="empty">aucune cochée</span>'}</div>
+  <div><b style="font-size:12.5px;color:var(--mut)">Compétences évaluées :</b> ${evComps.map(c=>`<span class="tag e">${keyLabel(c)}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div>
   ${docsBlock(s)}
   <div class="row" style="margin-top:12px"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ Séance faite</button><button class="btn" onclick="go('seance','${s.id}')">Ouvrir la séance</button><button class="btn" onclick="go('progression')">Choisir une autre séance</button></div>`
  :`<div class="empty" style="font-size:15px">${seancesOf(g).length?"Toutes les séances de la progression sont faites. 🎉":"Aucune séance dans la progression."}</div>${isAdmin()?`<div class="row" style="margin-top:10px"><button class="btn p" onclick="go('progression')">📅 Construire ma progression</button></div>`:""}`}
@@ -399,11 +430,11 @@ function vProgression(g){const ss=seancesOf(g);
  <div class="row">${isAdmin()?`<button class="btn p" onclick="editSeance()">➕ Ajouter une séance</button><button class="btn" onclick="copyProg()">⧉ Reprendre une progression</button>`:""}</div></div>
  <div class="consigne">Une séance = un numéro (S-01, S-02…) et une partie : <b>D</b> division ou <b>S</b> section. Cochez les compétences <b>vues</b> pendant la séance et fléchez vos documents (liens OneDrive). La date est enregistrée quand vous cliquez « Séance faite ».</div>
  <div class="tw"><table><tr><th>Code</th><th>Titre</th><th>Compétences vues</th><th>Docs</th><th>Faite le</th><th></th></tr>
- ${ss.map(s=>`<tr><td><b>${seanceCode(s)}</b></td><td>${h(s.titre)}</td><td>${(s.comps||[]).map(c=>`<span class="tag v">${c}</span>`).join("")}</td><td class="c">${(s.docs||[]).length}</td><td>${s.done?fdate(s.done.date)+` <span class="hint">(stage ${stageOf(g,s.done.date)||"—"})</span>`:'<span class="hint">à venir</span>'}</td>
+ ${ss.map(s=>`<tr><td><b>${seanceCode(s)}</b></td><td>${h(s.titre)}</td><td>${(s.comps||[]).map(c=>`<span class="tag v">${keyLabel(c)}</span>`).join("")}</td><td class="c">${(s.docs||[]).length}</td><td>${s.done?fdate(s.done.date)+` <span class="hint">(stage ${stageOf(g,s.done.date)||"—"})</span>`:'<span class="hint">à venir</span>'}</td>
  <td style="white-space:nowrap"><button class="btn s" onclick="go('seance','${s.id}')">Ouvrir</button> ${isAdmin()?`<button class="btn s" onclick="moveSeance('${s.id}',-1)">↑</button><button class="btn s" onclick="moveSeance('${s.id}',1)">↓</button>`:""}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune séance. Cliquez « Ajouter une séance ».</td></tr>`}</table></div>`}
 function moveSeance(id,d){const g=cur();const ss=seancesOf(g);const i=ss.findIndex(s=>s.id===id);const j=i+d;if(j<0||j>=ss.length)return;const t=ss[i].ordre;ss[i].ordre=ss[j].ordre;ss[j].ordre=t;save();render()}
 function compChecks(g,sel,name){const list=compList(g);const sl=new Set(sel||[]);
- const blk=(f,t)=>`<div class="hint" style="margin-top:6px;font-weight:700">${t}</div>`+list.filter(c=>c[2]===f).map(c=>`<label class="cbx"><input type="checkbox" name="${name}" value="${c[0]}" ${sl.has(c[0])?"checked":""}> <b>${c[0]}</b>&nbsp;${h(c[1])}</label>`).join("");
+ const blk=(f,t)=>`<div class="hint" style="margin-top:6px;font-weight:700">${t}</div>`+list.filter(c=>c[2]===f).map(c=>`<label class="cbx"><input type="checkbox" name="${name}" value="${c[0]}" ${sl.has(c[0])?"checked":""}> <b>${keyLabel(c[0])}</b>&nbsp;${h(c[1])}</label>`).join("");
  return blk(1,"Compétences utiles en étude de construction")+`<details><summary class="hint" style="cursor:pointer;margin-top:6px">Autres compétences du référentiel (atelier)</summary>${blk(0,"")}</details>`}
 function editSeance(id){const g=cur();const s=id?D.seances.find(x=>x.id===id):null;const ss=seancesOf(g);
  const lastNum=ss.length?Math.max(...ss.map(x=>x.num)):0;
@@ -419,8 +450,8 @@ function editSeance(id){const g=cur();const s=id?D.seances.find(x=>x.id===id):nu
 function vSeance(g){const s=D.seances.find(x=>x.id===S.param);if(!s)return vProgression(g);const evs=D.evals.filter(e=>e.seanceId===s.id);
  return `<div class="head"><div><h1>${seanceCode(s)} · ${h(s.titre)}</h1><div class="sub">${s.done?`Faite le ${fdate(s.done.date)} · ${(s.done.absents||[]).length} absent(s)`:"À venir"}</div></div>
  <div class="row"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ ${s.done?"Modifier la date / les absents":"Séance faite"}</button>${s.done&&isAdmin()?`<button class="btn" onclick="undoFaite('${s.id}')">Annuler « faite »</button>`:""}${isAdmin()?`<button class="btn" onclick="editSeance('${s.id}')">✎ Modifier</button>`:""}</div></div>
- <div class="card"><div class="lbl">Compétences</div><div><b style="font-size:13px">Vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v">${c} ${h(compName(c))}</span>`).join("")||'<span class="empty">aucune</span>'}</div>
- <div style="margin-top:6px"><b style="font-size:13px">Évaluées :</b> ${[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))].map(c=>`<span class="tag e">${c}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div></div>
+ <div class="card"><div class="lbl">Compétences</div><div><b style="font-size:13px">Vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v">${keyLabel(c)} ${h(compName(c,g))}</span>`).join("")||'<span class="empty">aucune</span>'}</div>
+ <div style="margin-top:6px"><b style="font-size:13px">Évaluées :</b> ${[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))].map(c=>`<span class="tag e">${keyLabel(c)}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div></div>
  <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Documents de la séance</div>${isAdmin()?`<button class="btn s" onclick="editDocs('${s.id}')">🔗 Flécher mes documents</button>`:""}</div>${docsBlock(s)}</div>
  <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Évaluations de la séance</div>${isAdmin()?`<button class="btn s p" onclick="newEval('${s.id}')">➕ Créer une évaluation</button>`:""}</div>
  ${evs.length?`<table>${evs.map(e=>evalRow(e)).join("")}</table>`:'<div class="empty">Aucune évaluation liée à cette séance.</div>'}</div>
@@ -485,7 +516,7 @@ function vSaisie(g){const e=D.evals.find(x=>x.id===S.param);if(!e)return vEvals(
  return `<div class="head"><div><h1>${h(e.titre)}</h1><div class="sub">${{diagnostique:"Diagnostique · non notée",formative:"Formative · non notée",sommative:"Sommative · compte dans la note"}[e.type]} · ${e.date?fdate(e.date):"sans date"} · total /${tot}</div></div>
  <div class="row"><button class="btn ${e.statut==="faite"?"n":""}" onclick="setStatut('${e.id}','faite')">${STATE_ICO[2]} Faite · à corriger</button><button class="btn ${e.statut==="corrigee"?"g":""}" onclick="setStatut('${e.id}','corrigee')">${STATE_ICO[3]} Corrigée</button></div></div>
  <div class="consigne">Tapez les points de chaque exercice et passez à la case suivante (Tab ou Entrée). La note et les compétences se calculent seules. Un jeune absent : cochez « Absent », puis choisissez <b>Reporter</b> ou <b>Annuler</b>. Quand toutes les notes sont tapées, cliquez « Corrigée ».</div>
- <div class="tw"><table id="stab"><tr><th>Apprenti</th>${e.ex.map(x=>`<th class="c">${h(x.label)}<br><span style="text-transform:none">/${x.bareme} · ${(x.comps||[]).join("+")||"—"}</span></th>`).join("")}<th class="c">Note /20</th><th class="c">Absent</th></tr>
+ <div class="tw"><table id="stab"><tr><th>Apprenti</th>${e.ex.map(x=>`<th class="c">${h(x.label)}<br><span style="text-transform:none">/${x.bareme} · ${(x.comps||[]).map(keyLabel).join("+")||"—"}</span></th>`).join("")}<th class="c">Note /20</th><th class="c">Absent</th></tr>
  ${st.map(s=>{const r=(e.res||{})[s.id]||{};return `<tr data-s="${s.id}"><td>${stName(s)}${r.absent&&r.abs?`<div class="hint">${r.abs==="annule"?"Évaluation annulée":r.abs==="remed"?"Reportée à la remédiation":"Reportée au stage "+h(r.reportStage)}</div>`:""}</td>
  ${e.ex.map(x=>`<td class="c"><input class="sc" type="number" inputmode="decimal" min="0" max="${x.bareme}" step="0.25" data-x="${x.id}" value="${r.sc&&r.sc[x.id]!==undefined?r.sc[x.id]:""}" ${r.absent?"disabled":""}></td>`).join("")}
  <td class="c" data-note>—</td><td class="c"><input type="checkbox" data-abs ${r.absent?"checked":""} style="width:auto"> ${r.absent?`<button class="btn s" data-dec>${r.abs?"Changer":"Décider"}</button>`:""}</td></tr>`}).join("")}</table></div>
@@ -503,7 +534,7 @@ function bindSaisie(e){const tab=document.getElementById("stab");e.res=e.res||{}
   tr.querySelector("[data-abs]").addEventListener("change",ev=>{const r=e.res[sid]=e.res[sid]||{sc:{}};r.absent=ev.target.checked;if(!r.absent){delete r.abs;delete r.reportStage}if(e.statut==="a_faire")e.statut="faite";save();render();if(r.absent)decide(e,sid)});
   const d=tr.querySelector("[data-dec]");if(d)d.onclick=()=>decide(e,sid)});
  const ana=()=>{const st=studentsOf(cur());const el=document.getElementById("ana");const rows=e.ex.map(x=>{let n=0,low=0;st.forEach(s=>{const r=e.res[s.id];if(!r||r.absent||!r.sc||r.sc[x.id]===undefined||r.sc[x.id]==="")return;n++;if(+r.sc[x.id]<x.bareme/2)low++});return {x,n,low}});
-  el.innerHTML=rows.map(o=>`<div class="row" style="justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span>${h(o.x.label)} <span class="hint">(${(o.x.comps||[]).join(", ")||"—"})</span></span><span>${o.n?`${o.low} / ${o.n} sous la moyenne ${o.n&&o.low/o.n>0.5?'<span class="pill s2">⚠ exercice ou séance à revoir</span>':""}`:'<span class="hint">pas encore de notes</span>'}</span></div>`).join("")};ana()}
+  el.innerHTML=rows.map(o=>`<div class="row" style="justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span>${h(o.x.label)} <span class="hint">(${(o.x.comps||[]).map(keyLabel).join(", ")||"—"})</span></span><span>${o.n?`${o.low} / ${o.n} sous la moyenne ${o.n&&o.low/o.n>0.5?'<span class="pill s2">⚠ exercice ou séance à revoir</span>':""}`:'<span class="hint">pas encore de notes</span>'}</span></div>`).join("")};ana()}
 function decide(e,sid){const s=findStudent(sid);const r=e.res[sid];const g=cur();const cs=stageOf(g,today());
  modal(`<h2>${stName(s)} absent(e)</h2><p class="sub" style="margin-bottom:8px">${h(e.titre)}</p>
  <label class="cbx"><input type="radio" name="d" value="remed" ${r.abs==="remed"?"checked":""}> <span><b>Reporter à la prochaine remédiation</b><br><span class="hint">L'évaluation apparaîtra au prochain point d'étape.</span></span></label>
@@ -529,9 +560,9 @@ function vEleve(g){const s=findStudent(S.param);if(!s)return vGroupe(g);const c=
  <div class="row"><button class="btn n" onclick="window.print()">🖨 Imprimer le bilan</button>${isAdmin()?`<button class="btn" onclick="editStudent('${s.id}')">✎ Modifier / sortir / effacer</button>`:""}</div></div>
  <div class="only-print"><h2>Bilan individuel · ${new Date().toLocaleDateString("fr-FR")}</h2></div>
  <div class="card"><div class="row" style="gap:24px"><div><div class="lbl">Niveau moyen</div><b style="font-size:22px">${p===null?"—":pct(p)+" %"}</b></div><div><div class="lbl">Compétences acquises</div><b style="font-size:22px">${Object.values(c).filter(x=>x.state===3).length} / ${Object.keys(c).length}</b></div><div><div class="lbl">Moyenne (sommatives)</div><b style="font-size:22px">${n.moy===null?"—":(Math.round(n.moy*10)/10).toString().replace(".",",")+" /20"}</b></div></div>
- ${diag.length?`<div class="hint" style="margin-top:8px">Positionnement d'entrée : ${diag.map(e=>{const x=evalStudentPct(e,s.id);return h(e.titre)+" : "+(x?pct(x.note20/20)+" %":"absent")}).join(" · ")}</div>`:""}</div>
+ ${diag.length?`<div class="hint" style="margin-top:8px">Positionnement d'entrée : ${diag.map(e=>{const x=evalStudentPct(e,s.id);const rr=(e.res||{})[s.id];return h(e.titre)+" : "+(x?pct(x.note20/20)+" %":rr&&rr.absent?"absent":"non passé")}).join(" · ")}</div>`:""}</div>
  <div class="card"><div class="lbl">Compétences</div><div class="tw" style="border:0"><table><tr><th>Compétence</th><th>État</th><th>Niveau (${D.settings.nbEvals} dernières)</th><th class="c">Évaluations</th><th>Positionnement</th></tr>
- ${compList(g).map(([code,nm,f])=>{const x=c[code];if(!f&&x.state===0)return "";return `<tr><td><b>${code}</b> ${h(nm)}${x.missed.length?`<div class="hint">⚠ absent à ${x.missed.map(seanceCode).join(", ")} : à rattraper</div>`:""}</td><td>${pill(x)}</td><td>${x.mean===null?"—":`<div class="row" style="gap:6px"><div class="bar" style="width:80px"><i style="width:${pct(x.mean)}%;background:${barColor(x.mean)}"></i></div>${pct(x.mean)} %</div>`}</td><td class="c">${x.n}</td><td>${x.diag===null?"—":pct(x.diag)+" %"}</td></tr>`}).join("")}</table></div>
+ ${compListM(s.metier).map(([code,nm,f])=>{const x=c[code];if(!f&&x.state===0)return "";return `<tr><td><b>${code}</b> ${h(nm)}${x.missed.length?`<div class="hint">⚠ absent à ${x.missed.map(seanceCode).join(", ")} : à rattraper</div>`:""}</td><td>${pill(x)}</td><td>${x.mean===null?"—":`<div class="row" style="gap:6px"><div class="bar" style="width:80px"><i style="width:${pct(x.mean)}%;background:${barColor(x.mean)}"></i></div>${pct(x.mean)} %</div>`}</td><td class="c">${x.n}</td><td>${x.diag===null?"—":pct(x.diag)+" %"}</td></tr>`}).join("")}</table></div>
  <div class="legend">${STATE_ICO[0]} Pas vue · ${STATE_ICO[1]} Vue en séance · ${STATE_ICO[2]} En cours · ${STATE_ICO[3]} Acquise (au moins ${D.settings.nbEvals} évaluations à ${D.settings.nbEvals} stages différents, moyenne ≥ ${D.settings.seuil} %) · « à confirmer » = bon niveau mais pas encore assez d'évaluations · « fragile » = était acquise, en baisse</div></div>
  <div class="card"><div class="lbl">Évaluations (datées)</div><table><tr><th>Date</th><th>Évaluation</th><th>Type</th><th class="c">Note /20</th><th>Remarque</th></tr>
  ${evs.map(e=>{const r=(e.res||{})[s.id];const x=evalStudentPct(e,s.id);const grp=G(e.gid);let rem="";if(r&&r.absent)rem=r.abs==="annule"?"annulée (absent)":r.abs==="remed"?"absent · reportée à la remédiation":r.abs==="stage"?"absent · reportée au stage "+r.reportStage:"absent · à décider";if(e.statut!=="corrigee"&&!rem)rem=e.statut==="faite"?"pas encore corrigée":"à venir";
@@ -553,7 +584,7 @@ function vGrille(g){const ss=seancesOf(g);const list=compList(g);const evOf=s=>D
  const unl=D.evals.filter(e=>e.gid===g.id&&!e.seanceId);
  const rowsH=list.map(([code,nm,f])=>{const used=ss.some(s=>(s.comps||[]).includes(code)||evOf(s).some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code))))||unl.some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code)));if(!f&&!used)return "";
   const nv=ss.filter(s=>(s.comps||[]).includes(code)).length;const ne=ss.filter(s=>evOf(s).some(ev=>ev.ex.some(x=>(x.comps||[]).includes(code)))).length+unl.filter(ev=>ev.ex.some(x=>(x.comps||[]).includes(code))).length;
-  return `<tr><td style="text-align:left;font-weight:600;white-space:nowrap" title="${h(nm)}">${code} <span class="hint" style="font-weight:400">${h(nm.length>32?nm.slice(0,32)+"…":nm)}</span>${!nv?' <span class="pill s0">jamais vue</span>':""}${!ne?' <span class="pill s2">jamais évaluée</span>':""}</td>${ss.map(s=>cell(s,code)).join("")}</tr>`}).join("");
+  return `<tr><td style="text-align:left;font-weight:600;white-space:nowrap" title="${h(nm)}">${keyLabel(code)} <span class="hint" style="font-weight:400">${h(nm.length>32?nm.slice(0,32)+"…":nm)}</span>${!nv?' <span class="pill s0">jamais vue</span>':""}${!ne?' <span class="pill s2">jamais évaluée</span>':""}</td>${ss.map(s=>cell(s,code)).join("")}</tr>`}).join("");
  return `<div class="head"><div><h1>Compétences de la progression</h1><div class="sub">${h(g.name)} · séances × compétences</div></div></div>
  <div class="consigne">V = compétence vue pendant la séance · E = évaluée dans une évaluation liée à la séance. D'un coup d'œil : les compétences jamais vues ou jamais évaluées.</div>
  ${ss.length?`<div class="tw"><table class="cgrid"><tr><th style="text-align:left">Compétence</th>${ss.map(s=>`<th class="c" title="${h(s.titre)}" style="${s.done?"":"opacity:.6"}">${seanceCode(s)}</th>`).join("")}</tr>${rowsH}</table></div>`:'<div class="card empty">Aucune séance dans la progression.</div>'}
@@ -563,7 +594,7 @@ function vRemed(g){const r=g.remed||{nextAt:D.settings.pointEvery,ajourn:0,hist:
  S.after=()=>{const q=document.getElementById("qr");if(q&&D.settings.avisUrl&&window.QRCode){new QRCode(q,{text:D.settings.avisUrl,width:150,height:150})}};
  return `<div class="head"><div><h1>Remédiations et point d'étape</h1><div class="sub">${h(g.name)} · un point d'étape tous les ${D.settings.pointEvery} stages · ${hasCal(g)?`stage actuel : ${cs||"—"} · prochain point : stage ${r.nextAt}`:"saisissez le calendrier pour activer les points d'étape"}</div></div></div>
  ${p?`<div class="card" style="border-left:6px solid ${p.red?"var(--red)":"var(--orange)"}"><div class="lbl">Point d'étape · stage ${p.stage}${p.ajourn?` · ajourné ${p.ajourn} fois`:""}</div>
- <h3>1. Remédiation proposée</h3>${p.groupes.length?p.groupes.map((x,i)=>`<div class="alert a-o"><span>👥</span><div><b>Groupe ${i+1} : ${x.noms.map(h).join(", ")}</b><span class="t">Compétence à retravailler : ${x.code} ${h(compName(x.code))}</span></div></div>`).join(""):'<div class="empty">Aucun jeune sous le seuil.</div>'}
+ <h3>1. Remédiation proposée</h3>${p.groupes.length?p.groupes.map((x,i)=>`<div class="alert a-o"><span>👥</span><div><b>Groupe ${i+1} : ${x.noms.map(h).join(", ")}</b><span class="t">Compétence à retravailler : ${x.code} ${h(compName(x.code,g))}</span></div></div>`).join(""):'<div class="empty">Aucun jeune sous le seuil.</div>'}
  ${p.reportes.length?`<div class="hint" style="margin-top:8px"><b>Évaluations reportées à cette remédiation :</b> ${p.reportes.map(x=>stName(x.s)+" ("+h(x.e.titre)+")").join(" · ")}</div>`:""}
  <h3 style="margin-top:14px">2. Avis des apprentis (Qualiopi, indicateur 33)</h3>${D.settings.avisUrl?`<div class="row" style="align-items:flex-start"><div id="qr" style="background:#fff;padding:6px"></div><div class="hint" style="max-width:340px">Les apprentis scannent ce QR code avec leur téléphone pour donner leur avis sur les ${D.settings.pointEvery} derniers stages (questionnaire anonyme).<br><a href="${h(D.settings.avisUrl)}" target="_blank" rel="noopener">Ouvrir le questionnaire</a></div></div>`:`<div class="empty">Aucun questionnaire réglé. ${isAdmin()?"Ajoutez le lien de votre questionnaire (Microsoft Forms…) dans Réglages.":""}</div>`}
  <label class="f">Synthèse des avis</label><textarea id="av" placeholder="Ce que les apprentis ont dit…"></textarea>
@@ -607,7 +638,7 @@ function vNouveau(){if(!isAdmin())return vGroupes();const sec=D.groups.filter(x=
  S.after=()=>{const k=document.getElementById("g_k");const upd=()=>{document.getElementById("g_mem").style.display=k.value==="division"?"block":"none";document.getElementById("g_met").style.display=k.value==="division"?"none":"block"};k.onchange=upd;upd()};
  return `<div class="head"><div><h1>Nouveau groupe</h1><div class="sub">4 étapes courtes</div></div></div>
  <div class="card"><label class="f">① Diplôme et type</label><div class="row"><select id="g_d" style="flex:1"><option>CAP</option></select><select id="g_k" style="flex:1"><option value="metier">Groupe métier (section)</option><option value="division">Division (plusieurs groupes réunis)</option></select></div>
- <div id="g_met"><label class="f">Métier</label><select id="g_m"><option value="MIS">MIS · Monteur en installations sanitaires</option></select><div class="hint">Phase de test : CAP MIS uniquement. Les autres métiers s'ajouteront avec leurs référentiels.</div></div>
+ <div id="g_met"><label class="f">Métier</label><select id="g_m"><option value="MIS">MIS · Monteur en installations sanitaires</option><option value="CV">CV · Couvreur</option></select><div class="hint">Phase de test : CAP MIS et CAP Couvreur. Les autres métiers s'ajouteront avec leurs référentiels.</div></div>
  <div id="g_mem"><label class="f">Groupes réunis dans la division</label>${sec.map(x=>`<label class="cbx"><input type="checkbox" name="mem" value="${x.id}"> ${h(x.name)}</label>`).join("")||'<div class="empty">Créez d\'abord vos groupes métier, puis la division.</div>'}</div>
  <label class="f">② Nom du groupe et année</label><div class="row"><input type="text" id="g_n" placeholder="ex. Groupe 1 · 1re année MIS" style="flex:2"><select id="g_a" style="flex:1"><option value="1">1re année</option><option value="2">2e année</option></select></div>
  <div id="g_st"><label class="f">③ Les apprentis (facultatif, possible plus tard)</label><textarea id="g_l" placeholder="DUPONT ; Léa&#10;MARTIN ; Tom"></textarea><div class="hint">Un apprenti par ligne : Nom ; Prénom. Pour une division, les apprentis viennent des groupes cochés.</div></div>
