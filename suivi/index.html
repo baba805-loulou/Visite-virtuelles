@@ -483,7 +483,8 @@ function vEvals(g){const evs=evalsOf(g);
  return `<div class="head"><div><h1>Évaluations</h1><div class="sub">${h(g.name)} · ${evs.length} évaluation(s)</div></div>${isAdmin()?`<button class="btn p" onclick="newEval()">➕ Créer une évaluation</button>`:""}</div>
  <div class="consigne">Pour chaque évaluation : vous créez les exercices avec leur barème et vous cochez les compétences visées. Ensuite, vous tapez seulement les points de chaque exercice : l'outil calcule la note et fait avancer les compétences.</div>
  <div class="card">${evs.length?`<table>${evs.map(evalRow).join("")}</table>`:'<div class="empty">Aucune évaluation.</div>'}</div>`}
-function newEval(seanceId){const g=cur();const e={id:uid(),gid:g.id,seanceId:seanceId||null,titre:"",type:"sommative",date:today(),statut:"a_faire",ex:[{id:uid(),label:"Exercice 1",bareme:5,comps:[]}],res:{},log:[],isNew:true};S.draft=e;go("evaledit","__draft")}
+function seanceComps(id){const s=id?D.seances.find(x=>x.id===id):null;return s?[...(s.comps||[])]:[]}
+function newEval(seanceId){const g=cur();const e={id:uid(),gid:g.id,seanceId:seanceId||null,titre:"",type:"sommative",date:today(),statut:"a_faire",ex:[{id:uid(),label:"Exercice 1",bareme:5,comps:seanceComps(seanceId)}],res:{},log:[],isNew:true};S.draft=e;go("evaledit","__draft")}
 function vEvalEdit(g){const e=S.param==="__draft"?S.draft:D.evals.find(x=>x.id===S.param);if(!e)return vEvals(g);const ss=seancesOf(g);
  const others=evalsOf(g).filter(x=>x.id!==e.id&&!x.remOf);
  S.after=()=>bindEvalEdit(e);
@@ -494,7 +495,7 @@ function vEvalEdit(g){const e=S.param==="__draft"?S.draft:D.evals.find(x=>x.id==
  <div style="flex:1;min-width:220px"><label class="f">Séance liée (facultatif)</label><select id="e_s"><option value="">— aucune —</option>${ss.map(s=>`<option value="${s.id}" ${e.seanceId===s.id?"selected":""}>${seanceCode(s)} · ${h(s.titre)}</option>`).join("")}</select></div></div>
  <label class="f">Évaluation de remédiation ? (facultatif)</label><select id="e_r"><option value="">Non</option>${others.map(x=>`<option value="${x.id}" ${e.remOf===x.id?"selected":""}>Oui, remédiation de : ${h(x.titre)}</option>`).join("")}</select>
  <div class="hint">Pour une remédiation, l'outil garde la meilleure des deux notes, avec la trace des deux.</div></div>
- <div class="card"><div class="lbl">Exercices</div><div class="consigne">Pour chaque exercice : un nom, un barème, et les compétences visées (cochez-en une ou plusieurs).</div><div id="exl"></div>
+ <div class="card"><div class="lbl">Exercices</div><div class="consigne">Pour chaque exercice : un nom, un barème, et les compétences visées. Les compétences vues de la séance liée sont cochées d'office : décochez celles que l'exercice n'évalue pas.</div><div id="exl"></div>
  <div class="row" style="margin-top:12px"><button class="btn" id="addex">➕ Ajouter un exercice</button></div></div>
  <div class="row"><button class="btn p" id="e_save">Enregistrer l'évaluation</button><button class="btn" onclick="history.length;go('evals')">Annuler</button>${!e.isNew&&isAdmin()?`<button class="btn danger" onclick="delEval('${e.id}')">Supprimer</button>`:""}</div>`}
 function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));const box=document.getElementById("exl");
@@ -502,7 +503,10 @@ function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));c
  const draw=()=>{box.innerHTML=ex.map((x,i)=>`<div class="ex"><div class="row"><div style="flex:3;min-width:200px"><label class="f" style="margin-top:0">Exercice ${i+1}</label><input type="text" data-l value="${h(x.label)}"></div><div style="flex:1;min-width:90px"><label class="f" style="margin-top:0">Barème (points)</label><input type="number" min="0" step="0.5" data-b value="${x.bareme}"></div></div>
  <label class="f">Compétences visées</label>${compChecks(g,x.comps,"c"+i)}<div class="row" style="margin-top:6px"><button class="btn s danger" data-del="${i}">Retirer l'exercice</button></div></div>`).join("");
   box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{sync();if(ex.length<2)return;ex.splice(+b.dataset.del,1);draw()})};
- draw();document.getElementById("addex").onclick=()=>{sync();ex.push({id:uid(),label:"Exercice "+(ex.length+1),bareme:5,comps:[]});draw()};
+ draw();const selS=document.getElementById("e_s");let prevSC=seanceComps(selS.value);const same=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+ /* Compétences de la séance cochées d'office : nouvel exercice, ou changement de séance (exercices non retouchés seulement) */
+ selS.addEventListener("change",()=>{sync();const nc=seanceComps(selS.value);ex.forEach(x=>{if(!x.comps.length||same(x.comps,prevSC))x.comps=[...nc]});prevSC=nc;draw();if(nc.length)toast("Compétences de la séance cochées : décochez celles qui ne sont pas évaluées")});
+ document.getElementById("addex").onclick=()=>{sync();ex.push({id:uid(),label:"Exercice "+(ex.length+1),bareme:5,comps:seanceComps(selS.value)});draw()};
  document.getElementById("e_save").onclick=()=>{sync();const t=document.getElementById("e_t").value.trim();if(!t){alert("Donnez un titre à l'évaluation.");return}
   if(ex.some(x=>!x.bareme)){alert("Chaque exercice doit avoir un barème.");return}
   if(ex.some(x=>!x.comps.length)&&!confirm("Un exercice n'a aucune compétence cochée : il comptera dans la note mais ne fera avancer aucune compétence. Continuer ?"))return;
