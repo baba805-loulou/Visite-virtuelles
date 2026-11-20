@@ -298,7 +298,7 @@ const robinet = add(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.08), mat(
   { t: 'Robinet de puisage', d: 'Alimenté depuis la maison par un fourreau sous dallage (interface maçon / plombier)', m: 'Laiton' });
 robinet.mesh.position.set(W / 2 + 0.04, 0.6, -L / 2 + 1.3);
 const elec = add(new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.6, 0.25), mat(0xd8d8d0)), 5, 8,
-  { t: 'Coffret ELEC', d: 'En limite de propriété côté rue · alimentation du garage, éclairage, prises, motorisation', m: 'Coffret polyester' });
+  { t: 'Coffret de branchement ENEDIS', d: 'En limite de propriété côté rue · départ de l\'alimentation du tableau électrique secondaire du garage', m: 'Coffret polyester' });
 elec.mesh.position.set(W / 2 + 0.25, 0.3, L / 2 + 3.2);
 
 // ---------- plomberie et réseaux (lot 6) + électricité (lot 5)
@@ -345,10 +345,73 @@ pipe([[X(1.0), 0.30, Z], [X(1.0), -0.5, Z], [X(1.0), -0.5, -L / 2 - 1.5]], 0.03,
   { t: 'Traversée de dalle EU + fourreau', d: 'Posé AVANT le coulage du dallage, rejoint le réseau EU de la maison', m: 'PVC Ø 100 (fourreau) / Ø 40' });
 pipe([[X(0.90), -0.5, Z], [X(0.90), -0.5, -L / 2 - 1.5]], 0.025, 0x2f6fb5, 6, 3,
   { t: 'Fourreau eau froide', d: 'Gaine bleue sous dallage, depuis la maison, posée avant le coulage du dallage', m: 'PEHD bleu' });
-pipe([[X(0.425), 2.75, Z], [X(0.425), 2.06, Z + 0.1]], 0.015, 0xe0b100, 5, 8,
-  { t: 'Alimentation électrique du chauffe-eau', d: 'Ligne dédiée protégée par disjoncteur, commandée en heures creuses (lot 5)', m: 'Câble 3G2,5 sous conduit' });
+// tableau électrique secondaire (mur Nord-Est, côté intérieur) : coordonnées de pose
+const XE = W / 2 - T - 0.02; // câbles posés en apparent sur la face intérieure du mur Nord-Est
+pipe([[XE, 1.725, -0.10], [XE, 2.18, -0.10], [XE, 2.18, Z], [X(0.425), 2.18, Z], [X(0.425), 2.06, Z + 0.1]], 0.012, 0xe0b100, 5, 8,
+  { t: 'Alimentation électrique du chauffe-eau', d: 'Ligne dédiée depuis le disjoncteur 20 A du tableau secondaire, commandée en heures creuses (lot 5)', m: 'Câble 3G2,5 sous conduit' });
 pipe([[W / 2 + 0.25, -0.5, L / 2 + 3.2], [W / 2 + 0.25, -0.5, 0], [W / 2 - 0.4, -0.5, 0]], 0.025, 0xe0b100, 5, 3,
-  { t: 'Fourreau électrique', d: 'Gaine rouge TPC depuis le coffret ELEC jusqu\'au garage', m: 'TPC Ø 63' });
+  { t: 'Fourreau électrique', d: 'Gaine rouge TPC depuis le coffret de branchement ENEDIS jusqu\'au garage', m: 'TPC Ø 63' });
+// ---------- électricité intérieure du garage (lot 5)
+const lab = sprite('Coffret de branchement ENEDIS', '#1f3a5f', 'rgba(255,255,255,.92)', 0.26); lab.position.set(0, 0.55, 0); elec.mesh.add(lab);
+pipe([[W / 2 - 0.4, -0.5, 0], [W / 2 - 0.4, 0.02, 0], [XE, 0.02, 0], [XE, 1.375, 0]], 0.014, 0xe0b100, 5, 8,
+  { t: 'Alimentation du tableau secondaire', d: 'Remonte du fourreau sous dallage jusqu\'au tableau électrique secondaire du garage', m: 'Câble R2V sous conduit' });
+const tab = add(new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.35, 0.32), mat(0xf2f2ee, { roughness: 0.5 })), 5, 8,
+  { t: 'Tableau électrique secondaire du garage', d: 'Mur Nord-Est, à côté de la porte de service · 1 interrupteur différentiel 30 mA + 4 disjoncteurs : prises de courant, éclairage, chauffe-eau, porte de garage · clique sur chaque module pour sa fiche', m: 'Coffret 1 rangée 13 modules, porte transparente' });
+tab.mesh.position.set(W / 2 - T - 0.05, 1.55, 0);
+const MODS = [
+  ['Interrupteur différentiel 30 mA', 'Tête du tableau : protège les personnes, coupe tous les circuits du garage en cas de fuite de courant', 'ID 40 A type A, 30 mA', 0x2f6fb5],
+  ['Disjoncteur 20 A · Prises de courant', 'Circuit des 3 prises de courant du garage', 'Disjoncteur 20 A, câble 3G2,5', 0xffffff],
+  ['Disjoncteur 10 A · Éclairage', 'Circuit des 2 luminaires du garage, commandés par l\'interrupteur près de la porte de service', 'Disjoncteur 10 A, câble 3G1,5', 0xffffff],
+  ['Disjoncteur 20 A · Chauffe-eau', 'Circuit spécialisé du chauffe-eau électrique 100 L, commandé en heures creuses', 'Disjoncteur 20 A, câble 3G2,5', 0xffffff],
+  ['Disjoncteur 16 A · Porte de garage', 'Circuit spécialisé du moteur de la porte de garage sectionnelle', 'Disjoncteur 16 A, câble 3G1,5', 0xffffff],
+];
+MODS.forEach(([t, d, m, c], i) => {
+  const w = i === 0 ? 0.07 : 0.035;
+  const zc = -0.12 + (i === 0 ? 0.035 : 0.075 + (i - 1) * 0.045);
+  const mo = add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.09, w), mat(c, { roughness: 0.5 })), 5, 8, { t, d, m });
+  mo.mesh.position.set(W / 2 - T - 0.115, 1.55, zc);
+  const lev = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, w * 0.5), mat(0x333333)); lev.position.set(-0.02, 0.01, 0); mo.mesh.add(lev); lev.userData.o = mo;
+});
+// prises de courant 16 A 2P+T (h = 1,10 m)
+function prise(pos, rotY, where) {
+  const g = new THREE.Group(); const pl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), mat(0xf4f4f0, { roughness: 0.4 })); g.add(pl);
+  const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.01, 16), mat(0x9a9a96)); hole.rotation.x = Math.PI / 2; hole.position.z = 0.012; g.add(hole);
+  g.position.set(...pos); g.rotation.y = rotY; scene.add(g);
+  const o = { mesh: g, lot: 5, step: 8, info: { t: 'Prise de courant', d: where + ' · hauteur 1,10 m · circuit prises (disjoncteur 20 A)', m: 'Prise 16 A 2P+T en saillie' } };
+  g.children.forEach(c => { c.userData.o = o; }); objects.push(o);
+}
+prise([XE - 0.01, 1.10, 0.60], -Math.PI / 2, 'Mur Nord-Est, à côté du tableau');
+prise([X(2.40), 1.10, Z + 0.01], 0, 'Mur Nord-Ouest, à côté de l\'évier');
+prise([xs + 0.02, 1.10, -1.20], Math.PI / 2, 'Mur Sud-Ouest');
+pipe([[XE, 1.375, 0.10], [XE, 1.10, 0.10], [XE, 1.10, 0.56]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit prises de courant', d: 'Depuis le disjoncteur 20 A vers la prise du mur Nord-Est', m: 'Câble 3G2,5 sous conduit' });
+pipe([[XE, 1.725, -0.05], [XE, 2.22, -0.05], [XE, 2.22, Z + 0.04], [X(2.40), 2.22, Z + 0.04], [X(2.40), 1.14, Z + 0.04]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit prises de courant', d: 'Depuis le disjoncteur 20 A vers la prise près de l\'évier', m: 'Câble 3G2,5 sous conduit' });
+pipe([[X(2.40), 2.22, Z + 0.04], [xs + 0.02, 2.22, Z + 0.04], [xs + 0.02, 2.22, -1.20], [xs + 0.02, 1.14, -1.20]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit prises de courant', d: 'Suite du circuit vers la prise du mur Sud-Ouest', m: 'Câble 3G2,5 sous conduit' });
+// luminaires (réglettes LED) + interrupteur
+const yl = yt(0) - 0.04;
+const lumMat = mat(0xffffff, { emissive: 0xfff4d6, emissiveIntensity: 0.8 });
+[-1.5, 1.5].forEach((zz, k) => {
+  const lu = add(new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.05, 1.20), lumMat), 5, 8,
+    { t: 'Luminaire ' + (k + 1) + ' / 2', d: 'Réglette LED au plafond, ' + (k ? 'côté porte de garage' : 'côté fond du garage') + ' · circuit éclairage (disjoncteur 10 A)', m: 'Réglette LED étanche IP65, 1,20 m' });
+  lu.mesh.position.set(0, yl, zz);
+});
+const inter = add(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 0.08), mat(0xf4f4f0, { roughness: 0.4 })), 5, 8,
+  { t: 'Interrupteur', d: 'Mur Nord-Est, à côté de la porte de service · hauteur 1,10 m · commande les 2 luminaires', m: 'Interrupteur simple allumage en saillie' });
+inter.mesh.position.set(XE - 0.01, 1.10, -1.75);
+pipe([[XE, 1.725, -0.14], [XE, 2.12, -0.14], [0, yl - 0.02, -0.14], [0, yl - 0.02, -0.9]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit éclairage', d: 'Depuis le disjoncteur 10 A vers les 2 luminaires', m: 'Câble 3G1,5 sous conduit' });
+pipe([[0, yl - 0.02, -0.14], [0, yl - 0.02, 0.9]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit éclairage', d: 'Liaison vers le luminaire côté porte de garage', m: 'Câble 3G1,5 sous conduit' });
+pipe([[XE, 2.12, -0.14], [XE, 2.12, -1.75], [XE, 1.14, -1.75]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit éclairage', d: 'Descente vers l\'interrupteur', m: 'Câble 3G1,5 sous conduit' });
+// moteur de la porte de garage
+const mot = add(new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.40), mat(0x5d6670, { roughness: 0.5 })), 5, 8,
+  { t: 'Moteur de la porte de garage', d: 'Au plafond, sur le rail de la porte sectionnelle · alimenté par un circuit spécialisé (disjoncteur 16 A)', m: 'Moteur électrique avec télécommande' });
+mot.mesh.position.set(0, 2.31, 1.0);
+pipe([[XE, 1.725, 0.12], [XE, 2.12, 0.12], [XE, 2.12, 1.0], [0.14, 2.31, 1.0]], 0.010, 0xe0b100, 5, 8,
+  { t: 'Circuit porte de garage', d: 'Depuis le disjoncteur 16 A vers le moteur de la porte', m: 'Câble 3G1,5 sous conduit' });
 // eaux pluviales extérieures
 pipe([[W / 2 + 0.18, 0.15, -L / 2 + 0.12], [W / 2 + 0.18, 0.15, -L / 2 - 0.5], [1.53, 0.15, -L / 2 - 0.5]], 0.035, 0x9aa4ab, 6, 8,
   { t: 'Raccord descente → récupérateur', d: 'Le plombier raccorde la descente posée par le couvreur-zingueur', m: 'PVC Ø 80' });
