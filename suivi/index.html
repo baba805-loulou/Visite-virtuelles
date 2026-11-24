@@ -178,6 +178,8 @@ const REF = {
   ["C4.3","Sceller et étancher par mortier",0],
   ["C4.4","Mettre en œuvre des membranes d'étanchéité",0]]}
 };
+/* Savoirs associés (CAP MIS : d'après le tableau croisé de la progression). CV : à ajouter après validation. */
+const SAV = {MIS:{groupes:{"S1": "Environnement de travail", "S2": "Énergie, environnement", "S3": "Systèmes constructifs", "S4": "Représentation graphique", "S5": "Description, estimation", "S6": "Communication", "S7": "Prévention", "S8": "Qualité", "S9": "Physique-chimie", "S10": "Appareils", "S11": "Réseaux de distribution", "S12": "Évacuation", "S13": "Systèmes", "S14": "Ventilation", "S15": "Mise en service", "S16": "Maintenance"},list:[["S1.1", "Le secteur du bâtiment et les entreprises"], ["S1.2", "Les intervenants de la construction"], ["S1.3", "Les étapes d'un projet de construction"], ["S1.4", "La démarche collaborative numérique (BIM)"], ["S1.5", "La co-activité, les interfaces chantier"], ["S1.6", "Les qualifications et les habilitations"], ["S2.1", "La réglementation énergétique et environnementale"], ["S2.2", "L'impact environnemental d'une activité"], ["S2.3", "La démarche éco-responsable en entreprise"], ["S2.4", "La gestion de l'environnement du site et des déchets"], ["S3.1", "Réglementation, normes, DTU, règles de l'art"], ["S3.2", "Le confort de l'habitat"], ["S3.3", "L'accessibilité du cadre bâti"], ["S3.4", "Les techniques de construction"], ["S3.5", "Les matériaux de construction"], ["S4.1", "Documents graphiques et numériques 2D"], ["S4.2", "Consultation des représentations 3D"], ["S4.3", "Schémas de principe hydrauliques et électriques"], ["S4.4", "Règles de dessin : croquis et schématisation"], ["S4.5", "Techniques de relevé d'ouvrages"], ["S5.1", "Description technique des ouvrages"], ["S5.2", "Documentation technique produits/appareils"], ["S5.3", "Quantification et estimation des ouvrages"], ["S6.1", "Communication orale et écrite"], ["S6.2", "Supports et outils de communication"], ["S6.3", "Communication technique en anglais"], ["S7.1", "Acteurs de la prévention"], ["S7.2", "Documents de la prévention"], ["S7.3", "Dangers, risques, mesures de prévention"], ["S7.4", "Mesures de prévention adaptées au métier"], ["S7.5", "Risques CMR (amiante, plomb)"], ["S7.6", "Sécurité physique et économie d'effort (PRAP)"], ["S7.7", "Champ d'intervention du SST"], ["S8.1", "Principes d'une démarche qualité"], ["S8.2", "Fiches d'autocontrôle"], ["S9.1", "Unités d'une installation"], ["S9.2", "Caractéristiques hydrauliques"], ["S9.3", "Caractéristiques électriques"], ["S9.4", "Caractéristiques mécaniques"], ["S9.5", "Dilatation des fluides"], ["S9.6", "Pertes de charge"], ["S9.7", "Traitement de l'eau (notions)"], ["S9.8", "Qualité de l'air intérieur"], ["S10.1", "Appareils à usage domestique et collectif"], ["S10.2", "Appareils adaptés aux PMR"], ["S10.3", "Robinetterie et accessoires"], ["S11.1", "Types de réseaux de distribution"], ["S11.2", "Autres réseaux (air comprimé, RIA…)"], ["S11.3", "Matériaux des réseaux"], ["S11.4", "Organes et accessoires des réseaux"], ["S11.5", "Règles et techniques de façonnage"], ["S11.6", "Règles et techniques d'assemblage"], ["S11.7", "Calorifugeage des réseaux"], ["S11.8", "Raccordement électrique des équipements"], ["S12.1", "Types de réseaux d'évacuation"], ["S12.2", "Matériaux des réseaux d'évacuation"], ["S12.3", "Organes des réseaux d'évacuation"], ["S12.4", "Systèmes d'assainissement"], ["S13.1", "Production d'eau chaude sanitaire"], ["S13.2", "Maintien en température de l'ECS"], ["S13.3", "Traitement de l'eau"], ["S13.4", "Pompage et surpression"], ["S13.5", "Relevage des évacuations"], ["S14.1", "Ventilation naturelle des locaux techniques"], ["S14.2", "VMC simple et double flux"], ["S15.1", "Première mise en service"], ["S15.2", "Remise en service"], ["S16.1", "Types de maintenance"], ["S16.2", "Démarche de diagnostic"], ["S16.3", "Procédure de maintenance"]]}};
 const METIERS = {MIS:{label:"MIS",color:"#1f5fa8"},CV:{label:"CV",color:"#7A4FA0"}};
 const DOC_TYPES = {support:"Supports pédagogiques",synthese:"Fiches synthèse",formateur:"Formateur"};
 const DOC_ICONS = {"Dossier apprenant":"📘","Ressources":"📎","Planches":"🗺️","Maquette":"🧱","Visite virtuelle":"🥽","Évaluation":"✏️","Fiche synthèse":"🧩","Corrigé":"🔒","Autre":"📄"};
@@ -271,6 +273,20 @@ function related(g){if(g.kind==="division")return [g,...memberGroups(g)];return 
 const SHARED=["C1.1","C1.2","C2.1","C2.2","C2.3","C3.2","C4.1"];
 function normKey(k,m){if(k.includes(":")){const [km,c]=k.split(":");return km===(m||"MIS")?c:null}return k}
 function keyLabel(k){return k.includes(":")?k.replace(":"," "):k}
+function savListM(m){return SAV[m]?SAV[m].list:[]}
+/* Savoirs d'un groupe : division mixte → clés préfixées par métier (ex. "MIS:S4.1") */
+function savList(g){const ms=metiersOf(g);if(ms.length===1)return savListM(ms[0]).map(x=>[x[0],x[1],ms[0]]);return ms.flatMap(m=>savListM(m).map(x=>[m+":"+x[0],x[1],m]))}
+function savName(k,g){const x=savList(g).find(y=>y[0]===k);return x?x[1]:k}
+function savChecks(g,sel,name){const list=savList(g);if(!list.length)return '<div class="empty">Pas encore de liste de savoirs associés pour ce métier.</div>';const sl=new Set(sel||[]);
+ const byG={};list.forEach(x=>{const c=x[0].split(":").pop();const gk=(x[2]+"|")+c.split(".")[0];(byG[gk]=byG[gk]||[]).push(x)});
+ return Object.entries(byG).map(([gk,l])=>{const [m,G]=gk.split("|");const n=l.filter(x=>sl.has(x[0])).length;return `<details ${n?"open":""}><summary class="hint" style="cursor:pointer;margin-top:6px;font-weight:700">${savList(g).some(x=>x[2]!==m)?m+" · ":""}${G} ${h((SAV[m].groupes||{})[G]||"")}${n?` · ${n} cochée(s)`:""}</summary>${l.map(x=>`<label class="cbx"><input type="checkbox" name="${name}" value="${x[0]}" ${sl.has(x[0])?"checked":""}> <b>${keyLabel(x[0])}</b>&nbsp;${h(x[1])}</label>`).join("")}</details>`}).join("")}
+function savTags(l,g){return (l||[]).map(k=>`<span class="tag" style="background:#efe9f7;color:#5b3a86" title="${h(savName(k,g))}">${keyLabel(k)} ${h(savName(k,g))}</span>`).join("")}
+/* Savoirs associés d'un jeune : vu si présent à une séance faite qui les vise ; évalué si présent à une évaluation qui les vise */
+function savStates(st){const m=st.metier||"MIS";const gs=groupsOfStudent(st).map(x=>x.id);const res={};savListM(m).forEach(([c,n])=>res[c]={code:c,nom:n,vu:null,eval:0,manque:[]});
+ D.seances.filter(x=>gs.includes(x.gid)&&x.done&&!(st.entree&&x.done.date<st.entree)).sort((a,b)=>a.done.date<b.done.date?-1:1).forEach(x=>{const abs=(x.done.absents||[]).includes(st.id);
+  (x.savoirs||[]).map(k=>normKey(k,m)).filter(c=>c&&res[c]).forEach(c=>{if(abs)res[c].manque.push(x);else if(!res[c].vu)res[c].vu=x.done.date})});
+ D.evals.filter(e=>gs.includes(e.gid)&&e.statut!=="a_faire").forEach(e=>{const r=(e.res||{})[st.id];if(!r||r.absent)return;(e.savoirs||[]).map(k=>normKey(k,m)).filter(c=>c&&res[c]).forEach(c=>{res[c].eval++;if(!res[c].vu)res[c].vu=e.date})});
+ return res}
 function compListM(m){return (REF[m]||REF.MIS).comps}
 function metiersOf(g){const ms=[...new Set(memberGroups(g).map(x=>x.metier||"MIS"))];return ms.length?ms:["MIS"]}
 /* Liste des compétences d'un groupe : pour une division MIS + CV, union des référentiels (même code = même compétence, intitulé propre à chaque métier) */
@@ -400,6 +416,7 @@ function vAccueil(g){
  ${s?`<h2>${seanceCode(s)} <small>· ${h(s.titre)}</small></h2>
   <div style="margin:6px 0 2px"><b style="font-size:12.5px;color:var(--mut)">Compétences vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v" title="${h(compName(c,g))}">${keyLabel(c)} ${h(compName(c,g))}</span>`).join("")||'<span class="empty">aucune cochée</span>'}</div>
   <div><b style="font-size:12.5px;color:var(--mut)">Compétences évaluées :</b> ${evComps.map(c=>`<span class="tag e">${keyLabel(c)}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div>
+  ${(s.savoirs||[]).length?`<div><b style="font-size:12.5px;color:var(--mut)">Savoirs associés :</b> ${savTags(s.savoirs,g)}</div>`:""}
   ${docsBlock(s)}
   <div class="row" style="margin-top:12px"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ Séance faite</button><button class="btn" onclick="go('seance','${s.id}')">Ouvrir la séance</button><button class="btn" onclick="go('progression')">Choisir une autre séance</button></div>`
  :`<div class="empty" style="font-size:15px">${seancesOf(g).length?"Toutes les séances de la progression sont faites. 🎉":"Aucune séance dans la progression."}</div>${isAdmin()?`<div class="row" style="margin-top:10px"><button class="btn p" onclick="go('progression')">📅 Construire ma progression</button></div>`:""}`}
@@ -442,16 +459,18 @@ function editSeance(id){const g=cur();const s=id?D.seances.find(x=>x.id===id):nu
  <div class="row"><div style="flex:1"><label class="f">Numéro</label><input type="number" id="num" min="1" value="${s?s.num:lastNum+(g.kind==="division"?1:1)}"></div>
  <div style="flex:1"><label class="f">Partie</label><select id="part"><option value="D" ${(!s&&g.kind==="division")||(s&&s.part==="D")?"selected":""}>D · division</option><option value="S" ${(!s&&g.kind!=="division")||(s&&s.part==="S")?"selected":""}>S · section</option></select></div></div>
  <label class="f">Titre de la séance</label><input type="text" id="tit" value="${h(s?s.titre:"")}" placeholder="ex. Plan de masse, plan de niveau">
- <label class="f">Compétences vues pendant la séance</label>${compChecks(g,s&&s.comps,"cv")}`,bg=>{
+ <label class="f">Compétences vues pendant la séance</label>${compChecks(g,s&&s.comps,"cv")}
+ <label class="f">Savoirs associés visés</label>${savChecks(g,s&&s.savoirs,"sv")}`,bg=>{
   const t=bg.querySelector("#tit").value.trim();if(!t){alert("Donnez un titre à la séance.");return false}
   const o=s||{id:uid(),gid:g.id,ordre:(ss.length?Math.max(...ss.map(x=>x.ordre)):0)+1,docs:[],done:null,annee:g.annee||1};
-  o.num=+bg.querySelector("#num").value||1;o.part=bg.querySelector("#part").value;o.titre=t;o.comps=[...bg.querySelectorAll("input[name=cv]:checked")].map(i=>i.value);
+  o.num=+bg.querySelector("#num").value||1;o.part=bg.querySelector("#part").value;o.titre=t;o.comps=[...bg.querySelectorAll("input[name=cv]:checked")].map(i=>i.value);o.savoirs=[...bg.querySelectorAll("input[name=sv]:checked")].map(i=>i.value);
   if(!s)D.seances.push(o);save("Séance enregistrée");S.view="seance";S.param=o.id;render()})}
 function vSeance(g){const s=D.seances.find(x=>x.id===S.param);if(!s)return vProgression(g);const evs=D.evals.filter(e=>e.seanceId===s.id);
  return `<div class="head"><div><h1>${seanceCode(s)} · ${h(s.titre)}</h1><div class="sub">${s.done?`Faite le ${fdate(s.done.date)} · ${(s.done.absents||[]).length} absent(s)`:"À venir"}</div></div>
  <div class="row"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ ${s.done?"Modifier la date / les absents":"Séance faite"}</button>${s.done&&isAdmin()?`<button class="btn" onclick="undoFaite('${s.id}')">Annuler « faite »</button>`:""}${isAdmin()?`<button class="btn" onclick="editSeance('${s.id}')">✎ Modifier</button>`:""}</div></div>
  <div class="card"><div class="lbl">Compétences</div><div><b style="font-size:13px">Vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v">${keyLabel(c)} ${h(compName(c,g))}</span>`).join("")||'<span class="empty">aucune</span>'}</div>
- <div style="margin-top:6px"><b style="font-size:13px">Évaluées :</b> ${[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))].map(c=>`<span class="tag e">${keyLabel(c)}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div></div>
+ <div style="margin-top:6px"><b style="font-size:13px">Évaluées :</b> ${[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))].map(c=>`<span class="tag e">${keyLabel(c)}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div>
+ <div style="margin-top:6px"><b style="font-size:13px">Savoirs associés :</b> ${savTags(s.savoirs,g)||'<span class="empty">aucun</span>'}</div></div>
  <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Documents de la séance</div>${isAdmin()?`<button class="btn s" onclick="editDocs('${s.id}')">🔗 Flécher mes documents</button>`:""}</div>${docsBlock(s)}</div>
  <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Évaluations de la séance</div>${isAdmin()?`<button class="btn s p" onclick="newEval('${s.id}')">➕ Créer une évaluation</button>`:""}</div>
  ${evs.length?`<table>${evs.map(e=>evalRow(e)).join("")}</table>`:'<div class="empty">Aucune évaluation liée à cette séance.</div>'}</div>
@@ -472,7 +491,7 @@ function copyProg(){const g=cur();const others=D.groups.filter(x=>x.id!==g.id&&s
  <label class="f">Groupe source</label><select id="src">${others.map(x=>`<option value="${x.id}">${h(x.name)} (${seancesOf(x).length} séances)</option>`).join("")}</select>`,bg=>{
   const src=G(bg.querySelector("#src").value);let base=(seancesOf(g).length?Math.max(...seancesOf(g).map(x=>x.ordre)):0);const map={};
   seancesOf(src).forEach(s=>{const n=Object.assign(JSON.parse(JSON.stringify(s)),{id:uid(),gid:g.id,done:null,ordre:++base});map[s.id]=n.id;D.seances.push(n)});
-  evalsOf(src).filter(e=>!e.remOf).forEach(e=>{D.evals.push({id:uid(),gid:g.id,seanceId:map[e.seanceId]||null,titre:e.titre,type:e.type,date:"",statut:"a_faire",ex:JSON.parse(JSON.stringify(e.ex)),res:{},log:[]})});
+  evalsOf(src).filter(e=>!e.remOf).forEach(e=>{D.evals.push({id:uid(),gid:g.id,seanceId:map[e.seanceId]||null,titre:e.titre,type:e.type,date:"",statut:"a_faire",ex:JSON.parse(JSON.stringify(e.ex)),savoirs:[...(e.savoirs||[])],res:{},log:[]})});
   save("Progression reprise");render()},"Reprendre")}
 
 function evalRow(e){const g=G(e.gid);const sts={a_faire:'<span class="pill s0">'+STATE_ICO[0]+' À faire</span>',faite:'<span class="pill s2">'+STATE_ICO[2]+' Faite · à corriger</span>',corrigee:'<span class="pill s3">'+STATE_ICO[3]+' Corrigée</span>'};
@@ -495,6 +514,7 @@ function vEvalEdit(g){const e=S.param==="__draft"?S.draft:D.evals.find(x=>x.id==
  <div style="flex:1;min-width:220px"><label class="f">Séance liée (facultatif)</label><select id="e_s"><option value="">— aucune —</option>${ss.map(s=>`<option value="${s.id}" ${e.seanceId===s.id?"selected":""}>${seanceCode(s)} · ${h(s.titre)}</option>`).join("")}</select></div></div>
  <label class="f">Évaluation de remédiation ? (facultatif)</label><select id="e_r"><option value="">Non</option>${others.map(x=>`<option value="${x.id}" ${e.remOf===x.id?"selected":""}>Oui, remédiation de : ${h(x.titre)}</option>`).join("")}</select>
  <div class="hint">Pour une remédiation, l'outil garde la meilleure des deux notes, avec la trace des deux.</div></div>
+ <div class="card"><div class="lbl">Savoirs associés visés</div><div class="consigne">Les savoirs associés de la séance liée sont cochés d'office : décochez ceux qui ne sont pas évalués.</div><div id="savl"></div></div>
  <div class="card"><div class="lbl">Exercices</div><div class="consigne">Pour chaque exercice : un nom, un barème, et les compétences visées. Les compétences vues de la séance liée sont cochées d'office : décochez celles que l'exercice n'évalue pas.</div><div id="exl"></div>
  <div class="row" style="margin-top:12px"><button class="btn" id="addex">➕ Ajouter un exercice</button></div></div>
  <div class="row"><button class="btn p" id="e_save">Enregistrer l'évaluation</button><button class="btn" onclick="history.length;go('evals')">Annuler</button>${!e.isNew&&isAdmin()?`<button class="btn danger" onclick="delEval('${e.id}')">Supprimer</button>`:""}</div>`}
@@ -505,12 +525,17 @@ function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));c
   box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{sync();if(ex.length<2)return;ex.splice(+b.dataset.del,1);draw()})};
  draw();const selS=document.getElementById("e_s");let prevSC=seanceComps(selS.value);const same=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
  /* Compétences de la séance cochées d'office : nouvel exercice, ou changement de séance (exercices non retouchés seulement) */
+ const seanceSav=id=>{const x=id?D.seances.find(y=>y.id===id):null;return x?[...(x.savoirs||[])]:[]};
+ let sav=e.isNew&&!(e.savoirs||[]).length?seanceSav(selS.value):[...(e.savoirs||[])];let prevSav=seanceSav(selS.value);const savBox=document.getElementById("savl");
+ const syncSav=()=>{sav=[...savBox.querySelectorAll("input[name=esv]:checked")].map(i=>i.value)};const drawSav=()=>{savBox.innerHTML=savChecks(g,sav,"esv")};drawSav();
+ selS.addEventListener("change",()=>{syncSav();const ns=seanceSav(selS.value);if(!sav.length||same(sav,prevSav))sav=[...ns];prevSav=ns;drawSav()});
+ S.getSav=()=>{syncSav();return sav};
  selS.addEventListener("change",()=>{sync();const nc=seanceComps(selS.value);ex.forEach(x=>{if(!x.comps.length||same(x.comps,prevSC))x.comps=[...nc]});prevSC=nc;draw();if(nc.length)toast("Compétences de la séance cochées : décochez celles qui ne sont pas évaluées")});
  document.getElementById("addex").onclick=()=>{sync();ex.push({id:uid(),label:"Exercice "+(ex.length+1),bareme:5,comps:seanceComps(selS.value)});draw()};
  document.getElementById("e_save").onclick=()=>{sync();const t=document.getElementById("e_t").value.trim();if(!t){alert("Donnez un titre à l'évaluation.");return}
   if(ex.some(x=>!x.bareme)){alert("Chaque exercice doit avoir un barème.");return}
   if(ex.some(x=>!x.comps.length)&&!confirm("Un exercice n'a aucune compétence cochée : il comptera dans la note mais ne fera avancer aucune compétence. Continuer ?"))return;
-  e.titre=t;e.date=document.getElementById("e_d").value;e.type=document.getElementById("e_ty").value;e.seanceId=document.getElementById("e_s").value||null;e.remOf=document.getElementById("e_r").value||null;e.ex=ex;
+  e.titre=t;e.date=document.getElementById("e_d").value;e.type=document.getElementById("e_ty").value;e.seanceId=document.getElementById("e_s").value||null;e.remOf=document.getElementById("e_r").value||null;e.ex=ex;e.savoirs=S.getSav();
   if(e.isNew){delete e.isNew;D.evals.push(e)}save("Évaluation enregistrée");go("saisie",e.id)}}
 function delEval(id){if(!confirm("Supprimer cette évaluation et toutes ses notes ?"))return;D.evals=D.evals.filter(e=>e.id!==id);save("Évaluation supprimée");go("evals")}
 
@@ -568,6 +593,9 @@ function vEleve(g){const s=findStudent(S.param);if(!s)return vGroupe(g);const c=
  <div class="card"><div class="lbl">Compétences</div><div class="tw" style="border:0"><table><tr><th>Compétence</th><th>État</th><th>Niveau (${D.settings.nbEvals} dernières)</th><th class="c">Évaluations</th><th>Positionnement</th></tr>
  ${compListM(s.metier).map(([code,nm,f])=>{const x=c[code];if(!f&&x.state===0)return "";return `<tr><td><b>${code}</b> ${h(nm)}${x.missed.length?`<div class="hint">⚠ absent à ${x.missed.map(seanceCode).join(", ")} : à rattraper</div>`:""}</td><td>${pill(x)}</td><td>${x.mean===null?"—":`<div class="row" style="gap:6px"><div class="bar" style="width:80px"><i style="width:${pct(x.mean)}%;background:${barColor(x.mean)}"></i></div>${pct(x.mean)} %</div>`}</td><td class="c">${x.n}</td><td>${x.diag===null?"—":pct(x.diag)+" %"}</td></tr>`}).join("")}</table></div>
  <div class="legend">${STATE_ICO[0]} Pas vue · ${STATE_ICO[1]} Vue en séance · ${STATE_ICO[2]} En cours · ${STATE_ICO[3]} Acquise (au moins ${D.settings.nbEvals} évaluations à ${D.settings.nbEvals} stages différents, moyenne ≥ ${D.settings.seuil} %) · « à confirmer » = bon niveau mais pas encore assez d'évaluations · « fragile » = était acquise, en baisse</div></div>
+ ${(()=>{const sv=savStates(s);const l=Object.values(sv);if(!l.length)return "";const vus=l.filter(x=>x.vu),aR=l.filter(x=>!x.vu&&x.manque.length);
+  return `<div class="card"><div class="lbl">Savoirs associés vus · ${vus.length} / ${l.length}</div>${vus.length?`<table><tr><th>Savoir associé</th><th>Vu le</th><th class="c">Évaluations</th></tr>${vus.map(x=>`<tr><td><b>${x.code}</b> ${h(x.nom)}</td><td>${fdate(x.vu)}</td><td class="c">${x.eval||"—"}</td></tr>`).join("")}</table>`:'<div class="empty">Aucun savoir associé vu pour l\'instant.</div>'}
+  ${aR.length?`<div class="hint" style="margin-top:8px">⚠ À rattraper (absent) : ${aR.map(x=>x.code+" ("+x.manque.map(seanceCode).join(", ")+")").join(" · ")}</div>`:""}</div>`})()}
  <div class="card"><div class="lbl">Évaluations (datées)</div><table><tr><th>Date</th><th>Évaluation</th><th>Type</th><th class="c">Note /20</th><th>Remarque</th></tr>
  ${evs.map(e=>{const r=(e.res||{})[s.id];const x=evalStudentPct(e,s.id);const grp=G(e.gid);let rem="";if(r&&r.absent)rem=r.abs==="annule"?"annulée (absent)":r.abs==="remed"?"absent · reportée à la remédiation":r.abs==="stage"?"absent · reportée au stage "+r.reportStage:"absent · à décider";if(e.statut!=="corrigee"&&!rem)rem=e.statut==="faite"?"pas encore corrigée":"à venir";
   return `<tr><td>${fdate(e.date)}</td><td>${h(e.titre)}${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${grp.kind==="division"?"Division":"Section"}</div></td><td>${e.type}</td><td class="c">${x&&e.type==="sommative"?(Math.round(x.note20*10)/10).toString().replace(".",","):x?pct(x.note20/20)+" %":"—"}</td><td class="hint">${rem}</td></tr>`}).join("")||'<tr><td colspan="5" class="empty">Aucune évaluation.</td></tr>'}</table></div>
@@ -592,7 +620,13 @@ function vGrille(g){const ss=seancesOf(g);const list=compList(g);const evOf=s=>D
  return `<div class="head"><div><h1>Compétences de la progression</h1><div class="sub">${h(g.name)} · séances × compétences</div></div></div>
  <div class="consigne">V = compétence vue pendant la séance · E = évaluée dans une évaluation liée à la séance. D'un coup d'œil : les compétences jamais vues ou jamais évaluées.</div>
  ${ss.length?`<div class="tw"><table class="cgrid"><tr><th style="text-align:left">Compétence</th>${ss.map(s=>`<th class="c" title="${h(s.titre)}" style="${s.done?"":"opacity:.6"}">${seanceCode(s)}</th>`).join("")}</tr>${rowsH}</table></div>`:'<div class="card empty">Aucune séance dans la progression.</div>'}
- ${unl.length?`<div class="hint" style="margin-top:8px">${unl.length} évaluation(s) non liée(s) à une séance, comptées dans « jamais évaluée ».</div>`:""}`}
+ ${unl.length?`<div class="hint" style="margin-top:8px">${unl.length} évaluation(s) non liée(s) à une séance, comptées dans « jamais évaluée ».</div>`:""}
+ ${(()=>{const L=savList(g);if(!L.length||!ss.length)return "";const used=L.filter(([k])=>ss.some(x=>(x.savoirs||[]).includes(k))||evOf2(g).some(e=>(e.savoirs||[]).includes(k)));const nv=L.filter(x=>!used.includes(x));
+  const cellS=(x,k)=>{const v=(x.savoirs||[]).includes(k);const e=D.evals.some(ev=>ev.seanceId===x.id&&(ev.savoirs||[]).includes(k));return v&&e?'<td class="cVE">V E</td>':v?'<td class="cV">V</td>':e?'<td class="cE">E</td>':'<td style="color:#ccc">·</td>'};
+  return `<h2 style="margin-top:22px">Savoirs associés de la progression</h2><div class="sub" style="margin-bottom:8px">${used.length} / ${L.length} savoirs associés visés au moins une fois</div>
+  ${used.length?`<div class="tw"><table class="cgrid"><tr><th style="text-align:left">Savoir associé</th>${ss.map(x=>`<th class="c" style="${x.done?"":"opacity:.6"}">${seanceCode(x)}</th>`).join("")}</tr>${used.map(([k,n])=>`<tr><td style="text-align:left;font-weight:600;white-space:nowrap" title="${h(n)}">${keyLabel(k)} <span class="hint" style="font-weight:400">${h(n.length>32?n.slice(0,32)+"…":n)}</span></td>${ss.map(x=>cellS(x,k)).join("")}</tr>`).join("")}</table></div>`:""}
+  ${nv.length?`<details class="card" style="margin-top:10px"><summary class="lbl" style="cursor:pointer">Savoirs associés jamais visés (${nv.length})</summary>${nv.map(([k,n])=>`<span class="tag">${keyLabel(k)} ${h(n)}</span>`).join("")}</details>`:""}`})()}`}
+function evOf2(g){return D.evals.filter(e=>e.gid===g.id)}
 
 function vRemed(g){const r=g.remed||{nextAt:D.settings.pointEvery,ajourn:0,hist:[]};const p=remedProposal(g);const cs=stageOf(g,today());
  S.after=()=>{const q=document.getElementById("qr");if(q&&D.settings.avisUrl&&window.QRCode){new QRCode(q,{text:D.settings.avisUrl,width:150,height:150})}};
@@ -619,6 +653,7 @@ function vBilans(g){const st=studentsOf(g);const ss=seancesOf(g);const list=comp
  <table><tr><td>Séances faites</td><td><b>${ss.filter(s=>s.done).length} / ${ss.length}</b></td></tr>
  <tr><td>Évaluations corrigées</td><td><b>${evs.filter(e=>e.statut==="corrigee").length} / ${evs.length}</b></td></tr>
  <tr><td>Compétences jamais vues</td><td>${nv.map(c=>c[0]).join(", ")||"aucune ✓"}</td></tr>
+ <tr><td>Savoirs associés jamais visés en séance</td><td>${(()=>{const L=savList(g);if(!L.length)return "—";const nv=L.filter(([k])=>!ss.some(x=>(x.savoirs||[]).includes(k)));return nv.length+" / "+L.length+(nv.length&&nv.length<=20?" : "+nv.map(x=>keyLabel(x[0])).join(", "):"")})()}</td></tr>
  <tr><td>Compétences jamais évaluées</td><td>${ne.map(c=>c[0]).join(", ")||"aucune ✓"}</td></tr>
  <tr><td>Exercices réussis par moins de la moitié du groupe</td><td>${hard.map(h).join("<br>")||"aucun"}</td></tr>
  <tr><td>Points d'étape (remédiation + avis apprentis)</td><td>${(r.hist||[]).length}</td></tr></table>
@@ -694,6 +729,8 @@ function loadDemo(){if(D.groups.some(g=>g.demo)&&!confirm("Un groupe de démonst
  const sd=[[1,"Accueil et lecture de plans",["C2.1"]],[2,"Les intervenants de la construction",["C1.1","C1.2"]],[3,"Les relevés de mesures",["C2.1","C2.2"]],[4,"Le dossier de consultation",["C2.1","C1.1"]],[5,"Échelles et conventions",["C2.1"]],[6,"Plan de masse, plan de niveau",["C2.1","C1.1"]],[7,"Fondations et réservations",["C2.1","C2.3"]],[8,"Façades et hauteurs",["C2.1","C4.1"]]];
  const DS={},SS={};sd.forEach(([n,t,c])=>{DS[n]=mk(div,n,"D",t,c,n<=5);SS[n]=mk(sec_,n,"S",t+" · plomberie",c.concat(n%2?["C2.2"]:["C2.3"]),n<=5)});
  DS[5].done.absents=[sec_.students[1].id];
+ const sv={1:["S4.1"],2:["S1.1","S1.2"],3:["S4.5"],4:["S1.3","S5.1"],5:["S4.1","S4.4"],6:["S4.1","S4.2"],7:["S3.4","S3.5"],8:["S4.1","S10.1"]};
+ Object.keys(sv).forEach(n=>{DS[n].savoirs=sv[n].slice(0,1);SS[n].savoirs=sv[n]});
  const rnd=(a,b)=>Math.round((a+Math.random()*(b-a))*2)/2;
  const lvl=[.85,.45,.6,.9,.75,.7,.55,.95];
  const mkE=(g,seance,titre,type,ex,stg,statut)=>{const e={id:uid(),gid:g.id,seanceId:seance.id,titre,type,date:cal[stg-1].debut,statut,ex:ex.map(([l,b,c])=>({id:uid(),label:l,bareme:b,comps:c})),res:{},log:[]};
