@@ -133,12 +133,13 @@ const LOTS = {
   5: { n: 'Lot 5 · Électricité', e: 'Élec Pollet', c: 0xe0b100 },
   6: { n: 'Lot 6 · Plomberie, sanitaire', e: 'Plomberie Varin', c: 0x7b5ea7 },
   7: { n: 'Lot 7 · Clôture, espaces verts', e: 'Jardins du Littoral', c: 0xf28c28 },
+  8: { n: 'Lot 8 · Peinture, revêtements de sol', e: 'Peinture Caux Déco', c: 0x00a3a3 },
 };
 // étape (0..7) à partir de laquelle l'objet apparaît
 const STEPS = ['Terrain naturel avant travaux', 'Terrassement : décaissement, plateforme et fouilles', 'Semelles filantes en béton armé + soubassement',
   'Fourreaux et attentes (eau, évacuation, électricité) puis dallage (±0,00 = 45,87 NGF)', 'Élévation des murs en blocs béton',
   'Charpente bois : sablières, chevrons, pannes', 'Couverture bac acier, rives, gouttière et descente : hors d\'eau', 'Portes posées : hors d\'air (clos et couvert)',
-  'Électricité, plomberie (chauffe-eau, évier, EP), enduit ton pierre', 'Abords : dalles, clôture, haie · garage terminé'];
+  'Électricité, plomberie (chauffe-eau, évier, EP), enduit ton pierre, peinture intérieure et peinture de sol', 'Abords : dalles, clôture, haie · garage terminé'];
 
 const objects = []; // {mesh, lot, step, info, baseMat}
 function mat(color, opts = {}) { return new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, ...opts }); }
@@ -203,6 +204,23 @@ const gNE = wall([[-3.5 + T, 0], [-3.5 + 5.4, 0], [-3.5 + 5.4, 2.15], [-3.5 + 6.
 const wNE = add(new THREE.Mesh(gNE, mat(0xb5b5b0)), 2, 4, wallInfo('Mur façade Nord-Est', 'Long pan 7,00 m · hauteur 2,50 m (égout) · briques de verre + porte de service'));
 wNE.mesh.rotation.y = Math.PI / 2; wNE.mesh.position.x = W / 2 - T;
 const walls = [wSE, wNO, wSO, wNE];
+
+// ---------- peinture intérieure (lot 8) : couche sur la face intérieure des 4 murs + peinture de sol
+const matPeint = mat(0xf2efe6, { roughness: 0.95 });
+const pInfo = (t) => ({ t: 'Peinture intérieure — ' + t, d: 'Murs en blocs béton : rebouchage, impression (sous-couche) puis 2 couches de peinture acrylique mate blanc cassé · après le passage des gaines électriques et de la plomberie', m: 'Peinture acrylique mate, blanc cassé' });
+const xi8 = W / 2 - T;
+const pSE = add(new THREE.Mesh(wall([[-xi8, 0], [-1.40, 0], [-1.40, 2.0], [1.40, 2.0], [1.40, 0], [xi8, 0], [xi8, yt(xi8)], [-xi8, yt(-xi8)]], [], 0.004), matPeint), 8, 8, pInfo('mur Sud-Est'));
+pSE.mesh.position.z = L / 2 - T - 0.006;
+const pNO = add(new THREE.Mesh(wall([[-xi8, 0], [xi8, 0], [xi8, yt(xi8)], [-xi8, yt(-xi8)]], [rect(-0.5, 1.6, 0.5, 2.0)], 0.004), matPeint), 8, 8, pInfo('mur Nord-Ouest'));
+pNO.mesh.position.z = -L / 2 + T + 0.002;
+const pSO = add(new THREE.Mesh(wall(rect(-L / 2 + T, 0, L / 2 - T, yt(-1.65) - 0.075), [], 0.004), matPeint), 8, 8, pInfo('mur Sud-Ouest'));
+pSO.mesh.rotation.y = Math.PI / 2; pSO.mesh.position.x = -W / 2 + T + 0.002;
+const pNE = add(new THREE.Mesh(wall([[-3.5 + T, 0], [-3.5 + 5.4, 0], [-3.5 + 5.4, 2.15], [-3.5 + 6.3, 2.15], [-3.5 + 6.3, 0], [3.5 - T, 0], [3.5 - T, yt(1.65) - 0.075], [-3.5 + T, yt(1.65) - 0.075]],
+  [rect(-3.5 + 1.2, 1.6, -3.5 + 2.2, 2.0)], 0.004), matPeint), 8, 8, pInfo('mur Nord-Est'));
+pNE.mesh.rotation.y = Math.PI / 2; pNE.mesh.position.x = W / 2 - T - 0.006;
+const pSol = add(new THREE.Mesh(new THREE.BoxGeometry(W - 2 * T, 0.004, L - 2 * T), mat(0x8f9ba3, { roughness: 0.45 })), 8, 8,
+  { t: 'Peinture de sol', d: 'Dallage béton : dépoussiérage, primaire d\'accrochage puis 2 couches de peinture de sol époxy gris clair, finition antidérapante · résiste aux huiles et au passage des roues', m: 'Résine époxy bicomposant gris clair' });
+pSol.mesh.position.y = 0.003;
 
 // joints de blocs (texture) avant enduit, enduit ensuite
 function blockTexture() {
