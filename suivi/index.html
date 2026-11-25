@@ -473,7 +473,7 @@ function editSeance(id){const g=cur();const s=id?D.seances.find(x=>x.id===id):nu
   if(!s)D.seances.push(o);save("Séance enregistrée");S.view="seance";S.param=o.id;render()})}
 function vSeance(g){const s=D.seances.find(x=>x.id===S.param);if(!s)return vProgression(g);const evs=D.evals.filter(e=>e.seanceId===s.id);
  return `<div class="head"><div><h1>${seanceCode(s)} · ${h(s.titre)}</h1><div class="sub">${s.done?`Faite le ${fdate(s.done.date)} · ${(s.done.absents||[]).length} absent(s)`:"À venir"}</div></div>
- <div class="row"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ ${s.done?"Modifier la date / les absents":"Séance faite"}</button>${s.done&&isAdmin()?`<button class="btn" onclick="undoFaite('${s.id}')">Annuler « faite »</button>`:""}${isAdmin()?`<button class="btn" onclick="editSeance('${s.id}')">✎ Modifier</button>`:""}</div></div>
+ <div class="row"><button class="btn p" onclick="seanceFaite('${s.id}')">✓ ${s.done?"Modifier la date / les absents":"Séance faite"}</button>${s.done&&isAdmin()?`<button class="btn" onclick="undoFaite('${s.id}')">Annuler « faite »</button>`:""}${isAdmin()?`<button class="btn" onclick="editSeance('${s.id}')">✎ Modifier</button><button class="btn" onclick="dupSeance('${s.id}')">⧉ Copier vers un autre groupe</button>`:""}</div></div>
  <div class="card"><div class="lbl">Compétences</div><div><b style="font-size:13px">Vues :</b> ${(s.comps||[]).map(c=>`<span class="tag v">${keyLabel(c)} ${h(compName(c,g))}</span>`).join("")||'<span class="empty">aucune</span>'}</div>
  <div style="margin-top:6px"><b style="font-size:13px">Évaluées :</b> ${[...new Set(evs.flatMap(e=>e.ex.flatMap(x=>x.comps||[])))].map(c=>`<span class="tag e">${keyLabel(c)}</span>`).join("")||'<span class="empty">aucune évaluation liée</span>'}</div>
  <div style="margin-top:6px"><b style="font-size:13px">Savoirs associés :</b> ${savTags(s.savoirs,g)||'<span class="empty">aucun</span>'}</div></div>
@@ -481,6 +481,28 @@ function vSeance(g){const s=D.seances.find(x=>x.id===S.param);if(!s)return vProg
  <div class="card"><div class="row" style="justify-content:space-between"><div class="lbl" style="margin:0">Évaluations de la séance</div>${isAdmin()?`<button class="btn s p" onclick="newEval('${s.id}')">➕ Créer une évaluation</button>`:""}</div>
  ${evs.length?`<table>${evs.map(e=>evalRow(e)).join("")}</table>`:'<div class="empty">Aucune évaluation liée à cette séance.</div>'}</div>
  ${s.done&&(s.done.absents||[]).length?`<div class="card"><div class="lbl">Absents à cette séance</div>${s.done.absents.map(id=>{const x=findStudent(id);return x?`<span class="tag">${stName(x)}</span>`:""}).join("")}<div class="hint">Les compétences vues passent dans leur rattrapage (fiche du jeune).</div></div>`:""}`}
+/* Copie d'une séance vers d'autres groupes : clés de compétences / savoirs adaptées aux métiers du groupe cible */
+function convKeys(keys,src,tgt,listFn){const tl=new Set(listFn(tgt).map(x=>x[0]));const sm=metiersOf(src);const out=[];let lost=0;
+ (keys||[]).forEach(k=>{const code=k.split(":").pop();const ms=k.includes(":")?[k.split(":")[0]]:sm;let r=null;
+  if(tl.has(k)&&(k.includes(":")||ms.every(m=>metiersOf(tgt).includes(m))))r=k;
+  if(!r&&listFn===compList&&tl.has(code)&&ms.concat(metiersOf(tgt)).every(m=>(SHARED_BY[m]||[]).includes(code)))r=code;
+  if(!r)for(const m of ms){if(tl.has(m+":"+code)){r=m+":"+code;break}if(metiersOf(tgt).length===1&&metiersOf(tgt)[0]===m&&tl.has(code)){r=code;break}}
+  if(!r&&!k.includes(":")&&tl.has(code)&&ms.some(m=>metiersOf(tgt).includes(m)))r=code;
+  if(!r){/* même code et même intitulé dans le métier cible → gardé */const nm=(listFn(src).find(x=>x[0]===k)||[])[1];const tm=listFn(tgt).find(x=>x[1]===nm&&x[0].split(":").pop()===code);if(nm&&tm)r=tm[0]}
+  if(r){if(!out.includes(r))out.push(r)}else lost++});return {keys:out,lost}}
+function dupSeance(id){const s=D.seances.find(x=>x.id===id);const src=G(s.gid);const others=D.groups.filter(x=>x.id!==src.id&&!x.archive);
+ if(!others.length){alert("Aucun autre groupe : créez d'abord le groupe de destination.");return}
+ const evs=D.evals.filter(e=>e.seanceId===s.id&&!e.remOf);
+ modal(`<h2>Copier ${seanceCode(s)} · ${h(s.titre)}</h2><div class="consigne">La séance est copiée avec son titre, ses compétences vues, ses savoirs associés et ses documents fléchés. Elle arrive « à venir » à la fin de la progression du groupe choisi. Rien n'est copié des jeunes ni des notes.</div>
+ <label class="f">Vers le(s) groupe(s)</label>${others.map(x=>`<label class="cbx"><input type="checkbox" name="dg" value="${x.id}"> ${h(x.name)} <span class="hint">(${dipOf(x)} ${metiersOf(x).join("+")} · ${x.kind==="division"?"division":"section"})</span></label>`).join("")}
+ ${evs.length?`<label class="cbx" style="margin-top:10px"><input type="checkbox" id="dev" checked> Copier aussi ${evs.length>1?"les "+evs.length+" évaluations liées":"l'évaluation liée"} (exercices, barèmes, compétences), sans les notes</label>`:""}`,bg=>{
+  const ids=[...bg.querySelectorAll("input[name=dg]:checked")].map(i=>i.value);if(!ids.length){alert("Cochez au moins un groupe.");return false}
+  const withE=evs.length&&bg.querySelector("#dev").checked;let lost=0;
+  ids.forEach(gid=>{const tg=G(gid);const ss=seancesOf(tg);const c=convKeys(s.comps,src,tg,compList),sv=convKeys(s.savoirs,src,tg,savList);lost+=c.lost+sv.lost;
+   const n={id:uid(),gid,num:s.num,part:tg.kind==="division"?"D":"S",titre:s.titre,comps:c.keys,savoirs:sv.keys,docs:JSON.parse(JSON.stringify(s.docs||[])),done:null,annee:tg.annee||1,ordre:(ss.length?Math.max(...ss.map(x=>x.ordre)):0)+1};D.seances.push(n);
+   if(withE)evs.forEach(e=>{const ex=e.ex.map(x=>{const k=convKeys(x.comps,src,tg,compList);lost+=k.lost;return {id:uid(),label:x.label,bareme:x.bareme,comps:k.keys}});const es=convKeys(e.savoirs,src,tg,savList);lost+=es.lost;
+    D.evals.push({id:uid(),gid,seanceId:n.id,titre:e.titre,type:e.type,date:"",statut:"a_faire",ex,savoirs:es.keys,res:{},log:[]})})});
+  save("Séance copiée vers "+ids.length+" groupe(s)");if(lost)setTimeout(()=>alert(lost+" compétence(s) ou savoir(s) n'ont pas d'équivalent exact dans le métier du groupe de destination et n'ont pas été copiés. Vérifiez la séance copiée (✎ Modifier)."),300);render()},"Copier")}
 function undoFaite(id){if(!confirm("Remettre cette séance « à venir » ?"))return;D.seances.find(x=>x.id===id).done=null;save();render()}
 function editDocs(id){const s=D.seances.find(x=>x.id===id);let docs=JSON.parse(JSON.stringify(s.docs||[]));
  const rowH=(d,i)=>`<div class="ex" data-i="${i}"><div class="row"><select data-k="type" style="flex:1">${Object.entries(DOC_TYPES).map(([k,v])=>`<option value="${k}" ${d.type===k?"selected":""}>${v}</option>`).join("")}</select><select data-k="kind" style="flex:1">${Object.keys(DOC_ICONS).map(k=>`<option ${d.kind===k?"selected":""}>${k}</option>`).join("")}</select></div>
