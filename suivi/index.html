@@ -525,7 +525,7 @@ function copyProg(){const g=cur();const others=D.groups.filter(x=>x.id!==g.id&&s
 function evalRow(e){const g=G(e.gid);const sts={a_faire:'<span class="pill s0">'+STATE_ICO[0]+' À faire</span>',faite:'<span class="pill s2">'+STATE_ICO[2]+' Faite · à corriger</span>',corrigee:'<span class="pill s3">'+STATE_ICO[3]+' Corrigée</span>'};
  const s=e.seanceId?D.seances.find(x=>x.id===e.seanceId):null;
  return `<tr><td><b>${h(e.titre)}</b>${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${s?seanceCode(s)+" · ":""}${{diagnostique:"diagnostique",formative:"formative",sommative:"sommative"}[e.type]} · ${e.ex.length} exercice(s) · /${e.ex.reduce((a,x)=>a+x.bareme,0)}</div></td><td>${e.date?fdate(e.date):'<span class="hint">sans date</span>'}</td><td>${sts[e.statut]}</td>
- <td style="white-space:nowrap;text-align:right"><button class="btn s p" onclick="go('saisie','${e.id}')">Saisir les notes</button> ${isAdmin()?`<button class="btn s" onclick="go('evaledit','${e.id}')">✎</button>`:""}</td></tr>`}
+ <td style="white-space:nowrap;text-align:right"><button class="btn s p" onclick="go('saisie','${e.id}')">Saisir les notes</button> ${isAdmin()?`<button class="btn s" onclick="go('evaledit','${e.id}')" title="Modifier">✎</button> <button class="btn s danger" onclick="delEval('${e.id}',true)" title="Supprimer">🗑</button>`:""}</td></tr>`}
 function vEvals(g){const evs=evalsOf(g);
  return `<div class="head"><div><h1>Évaluations</h1><div class="sub">${h(g.name)} · ${evs.length} évaluation(s)</div></div>${isAdmin()?`<button class="btn p" onclick="newEval()">➕ Créer une évaluation</button>`:""}</div>
  <div class="consigne">Pour chaque évaluation : vous créez les exercices avec leur barème et vous cochez les compétences visées. Ensuite, vous tapez seulement les points de chaque exercice : l'outil calcule la note et fait avancer les compétences.</div>
@@ -565,7 +565,9 @@ function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));c
   if(ex.some(x=>!x.comps.length)&&!confirm("Un exercice n'a aucune compétence cochée : il comptera dans la note mais ne fera avancer aucune compétence. Continuer ?"))return;
   e.titre=t;e.date=document.getElementById("e_d").value;e.type=document.getElementById("e_ty").value;e.seanceId=document.getElementById("e_s").value||null;e.remOf=document.getElementById("e_r").value||null;e.ex=ex;e.savoirs=S.getSav();
   if(e.isNew){delete e.isNew;D.evals.push(e)}save("Évaluation enregistrée");go("saisie",e.id)}}
-function delEval(id){if(!confirm("Supprimer cette évaluation et toutes ses notes ?"))return;D.evals=D.evals.filter(e=>e.id!==id);save("Évaluation supprimée");go("evals")}
+function delEval(id,stay){const e=D.evals.find(x=>x.id===id);if(!e)return;const nNotes=Object.values(e.res||{}).filter(r=>r.sc&&Object.values(r.sc).some(v=>v!==""&&v!==undefined)).length;
+ if(!confirm("Supprimer définitivement l'évaluation « "+e.titre+" »"+(nNotes?" et les notes de "+nNotes+" apprenti(s)":"")+" ? Cette action est irréversible."))return;
+ D.evals=D.evals.filter(x=>x.id!==id);D.evals.forEach(x=>{if(x.remOf===id)x.remOf=null});save("Évaluation supprimée");if(stay&&S.view!=="evaledit")render();else go("evals")}
 
 function vSaisie(g){const e=D.evals.find(x=>x.id===S.param);if(!e)return vEvals(g);let st=studentsOf(g);
  if(e.remOf){const o=D.evals.find(x=>x.id===e.remOf);}
