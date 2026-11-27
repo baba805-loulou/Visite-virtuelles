@@ -90,7 +90,8 @@ textarea{min-height:90px}
 label.f{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
 .hint{font-size:12.5px;color:var(--mut);margin-top:3px}
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:12px;white-space:nowrap}
-.s0{background:#ece7de;color:#7a7266}.s1{background:#e7f0fb;color:#1f4f8a}.s2{background:#fdf1e3;color:#a35a0c}.s3{background:#e3f3ea;color:#1f6b42}
+.s0{background:#ece7de;color:#7a7266}.sNA{background:#fbe9e7;color:#a8321f}
+.pb{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 8px;font-size:12.5px;font-weight:700;cursor:pointer;margin:1px}.pb.on.A{background:var(--green);color:#fff;border-color:var(--green)}.pb.on.ECA{background:var(--orange);color:#fff;border-color:var(--orange)}.pb.on.NA{background:var(--red);color:#fff;border-color:var(--red)}.pb[disabled]{opacity:.35;pointer-events:none}.s1{background:#e7f0fb;color:#1f4f8a}.s2{background:#fdf1e3;color:#a35a0c}.s3{background:#e3f3ea;color:#1f6b42}
 .q{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid currentColor;flex-shrink:0}.q0{background:none}.q1{background:conic-gradient(currentColor 0 25%,transparent 0)}.q2{background:conic-gradient(currentColor 0 50%,transparent 0)}.q3{background:currentColor}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 .bar{height:8px;background:#eee;border-radius:5px;overflow:hidden;min-width:60px}.bar i{display:block;height:100%}
@@ -309,8 +310,14 @@ function stageOf(g,date){const cal=(g.calendar&&g.calendar.length?g.calendar:(me
 function hasCal(g){return ((g.calendar&&g.calendar.length?g.calendar:(memberGroups(g)[0]||{}).calendar)||[]).length>0}
 
 /* ===================== Calculs ===================== */
+/* Évaluation formative : pas de points, chaque compétence positionnée Acquis / En cours d'acquisition / Non acquis */
+const POS={A:{l:"Acquis",c:"A",v:1,cls:"s3"},ECA:{l:"En cours d'acquisition",c:"ECA",v:.5,cls:"s2"},NA:{l:"Non acquis",c:"NA",v:0,cls:"sNA"}};
+const isForm=e=>e.type==="formative";
+const evalComps=e=>[...new Set(e.ex.flatMap(x=>x.comps||[]))];
+function posSummary(r){if(!r||!r.pos)return "";const n={A:0,ECA:0,NA:0};Object.values(r.pos).forEach(v=>{if(n[v]!==undefined)n[v]++});return Object.keys(n).filter(k=>n[k]).map(k=>k+" "+n[k]).join(" · ")}
 function evalStudentPct(e,sid){ // {note20, comps:{code:pct}, total}
- const r=(e.res||{})[sid];if(!r||r.absent)return null;let tot=0,got=0,comps={},any=false;
+ const r=(e.res||{})[sid];if(!r||r.absent)return null;
+ if(isForm(e)&&r.pos&&Object.keys(r.pos).length){const cp={};let t=0,n=0;for(const c in r.pos){const v=(POS[r.pos[c]]||{}).v;if(v===undefined)continue;cp[c]=v;t+=v;n++}if(!n)return null;return {note20:t/n*20,comps:cp,formative:true,complete:evalComps(e).every(c=>r.pos[c])}}let tot=0,got=0,comps={},any=false;
  e.ex.forEach(x=>{const v=r.sc?r.sc[x.id]:undefined;if(v===undefined||v===""||v===null)return;any=true;const val=Math.max(0,Math.min(+v,x.bareme));tot+=x.bareme;got+=val;
   (x.comps||[]).forEach(c=>{comps[c]=comps[c]||[0,0];comps[c][0]+=val;comps[c][1]+=x.bareme})});
  if(!any)return null;const cp={};for(const c in comps)cp[c]=comps[c][1]?comps[c][0]/comps[c][1]:0;
@@ -524,7 +531,7 @@ function copyProg(){const g=cur();const others=D.groups.filter(x=>x.id!==g.id&&s
 
 function evalRow(e){const g=G(e.gid);const sts={a_faire:'<span class="pill s0">'+STATE_ICO[0]+' À faire</span>',faite:'<span class="pill s2">'+STATE_ICO[2]+' Faite · à corriger</span>',corrigee:'<span class="pill s3">'+STATE_ICO[3]+' Corrigée</span>'};
  const s=e.seanceId?D.seances.find(x=>x.id===e.seanceId):null;
- return `<tr><td><b>${h(e.titre)}</b>${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${s?seanceCode(s)+" · ":""}${{diagnostique:"diagnostique",formative:"formative",sommative:"sommative"}[e.type]} · ${e.ex.length} exercice(s) · /${e.ex.reduce((a,x)=>a+x.bareme,0)}</div></td><td>${e.date?fdate(e.date):'<span class="hint">sans date</span>'}</td><td>${sts[e.statut]}</td>
+ return `<tr><td><b>${h(e.titre)}</b>${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${s?seanceCode(s)+" · ":""}${{diagnostique:"diagnostique",formative:"formative",sommative:"sommative"}[e.type]} · ${isForm(e)?evalComps(e).length+" compétence(s) · Acquis / En cours / Non acquis":e.ex.length+" exercice(s) · /"+e.ex.reduce((a,x)=>a+x.bareme,0)}</div></td><td>${e.date?fdate(e.date):'<span class="hint">sans date</span>'}</td><td>${sts[e.statut]}</td>
  <td style="white-space:nowrap;text-align:right"><button class="btn s p" onclick="go('saisie','${e.id}')">Saisir les notes</button> ${isAdmin()?`<button class="btn s" onclick="go('evaledit','${e.id}')" title="Modifier">✎</button> <button class="btn s danger" onclick="delEval('${e.id}',true)" title="Supprimer">🗑</button>`:""}</td></tr>`}
 function vEvals(g){const evs=evalsOf(g);
  return `<div class="head"><div><h1>Évaluations</h1><div class="sub">${h(g.name)} · ${evs.length} évaluation(s)</div></div>${isAdmin()?`<button class="btn p" onclick="newEval()">➕ Créer une évaluation</button>`:""}</div>
@@ -543,15 +550,15 @@ function vEvalEdit(g){const e=S.param==="__draft"?S.draft:D.evals.find(x=>x.id==
  <label class="f">Évaluation de remédiation ? (facultatif)</label><select id="e_r"><option value="">Non</option>${others.map(x=>`<option value="${x.id}" ${e.remOf===x.id?"selected":""}>Oui, remédiation de : ${h(x.titre)}</option>`).join("")}</select>
  <div class="hint">Pour une remédiation, l'outil garde la meilleure des deux notes, avec la trace des deux.</div></div>
  <div class="card"><div class="lbl">Savoirs associés visés</div><div class="consigne">Les savoirs associés de la séance liée sont cochés d'office : décochez ceux qui ne sont pas évalués.</div><div id="savl"></div></div>
- <div class="card"><div class="lbl">Exercices</div><div class="consigne">Pour chaque exercice : un nom, un barème, et les compétences visées. Les compétences vues de la séance liée sont cochées d'office : décochez celles que l'exercice n'évalue pas.</div><div id="exl"></div>
+ <div class="card"><div class="lbl">Exercices</div><div class="consigne" id="e_fo" style="display:${e.type==="formative"?"block":"none"}"><b>Formative :</b> pas de barème. À la saisie, chaque compétence cochée sera positionnée Acquis / En cours d'acquisition / Non acquis pour chaque apprenti.</div><div class="consigne">Pour chaque exercice : un nom, un barème, et les compétences visées. Les compétences vues de la séance liée sont cochées d'office : décochez celles que l'exercice n'évalue pas.</div><div id="exl"></div>
  <div class="row" style="margin-top:12px"><button class="btn" id="addex">➕ Ajouter un exercice</button></div></div>
  <div class="row"><button class="btn p" id="e_save">Enregistrer l'évaluation</button><button class="btn" onclick="history.length;go('evals')">Annuler</button>${!e.isNew&&isAdmin()?`<button class="btn danger" onclick="delEval('${e.id}')">Supprimer</button>`:""}</div>`}
 function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));const box=document.getElementById("exl");
  const sync=()=>{ex=[...box.querySelectorAll(".ex")].map((d,i)=>({id:ex[i].id,label:d.querySelector("[data-l]").value,bareme:+d.querySelector("[data-b]").value||0,comps:[...d.querySelectorAll("input[type=checkbox]:checked")].map(c=>c.value)}))};
- const draw=()=>{box.innerHTML=ex.map((x,i)=>`<div class="ex"><div class="row"><div style="flex:3;min-width:200px"><label class="f" style="margin-top:0">Exercice ${i+1}</label><input type="text" data-l value="${h(x.label)}"></div><div style="flex:1;min-width:90px"><label class="f" style="margin-top:0">Barème (points)</label><input type="number" min="0" step="0.5" data-b value="${x.bareme}"></div></div>
+ const draw=()=>{box.innerHTML=ex.map((x,i)=>`<div class="ex"><div class="row"><div style="flex:3;min-width:200px"><label class="f" style="margin-top:0">Exercice ${i+1}</label><input type="text" data-l value="${h(x.label)}"></div><div style="flex:1;min-width:90px;${document.getElementById("e_ty")&&document.getElementById("e_ty").value==="formative"?"display:none":""}"><label class="f" style="margin-top:0">Barème (points)</label><input type="number" min="0" step="0.5" data-b value="${x.bareme}"></div></div>
  <label class="f">Compétences visées</label>${compChecks(g,x.comps,"c"+i)}<div class="row" style="margin-top:6px"><button class="btn s danger" data-del="${i}">Retirer l'exercice</button></div></div>`).join("");
   box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{sync();if(ex.length<2)return;ex.splice(+b.dataset.del,1);draw()})};
- draw();const selS=document.getElementById("e_s");let prevSC=seanceComps(selS.value);const same=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+ draw();document.getElementById("e_ty").addEventListener("change",()=>{sync();draw();const f=document.getElementById("e_fo");if(f)f.style.display=document.getElementById("e_ty").value==="formative"?"block":"none"});const selS=document.getElementById("e_s");let prevSC=seanceComps(selS.value);const same=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
  /* Compétences de la séance cochées d'office : nouvel exercice, ou changement de séance (exercices non retouchés seulement) */
  const seanceSav=id=>{const x=id?D.seances.find(y=>y.id===id):null;return x?[...(x.savoirs||[])]:[]};
  let sav=e.isNew&&!(e.savoirs||[]).length?seanceSav(selS.value):[...(e.savoirs||[])];let prevSav=seanceSav(selS.value);const savBox=document.getElementById("savl");
@@ -561,7 +568,8 @@ function bindEvalEdit(e){const g=cur();let ex=JSON.parse(JSON.stringify(e.ex));c
  selS.addEventListener("change",()=>{sync();const nc=seanceComps(selS.value);ex.forEach(x=>{if(!x.comps.length||same(x.comps,prevSC))x.comps=[...nc]});prevSC=nc;draw();if(nc.length)toast("Compétences de la séance cochées : décochez celles qui ne sont pas évaluées")});
  document.getElementById("addex").onclick=()=>{sync();ex.push({id:uid(),label:"Exercice "+(ex.length+1),bareme:5,comps:seanceComps(selS.value)});draw()};
  document.getElementById("e_save").onclick=()=>{sync();const t=document.getElementById("e_t").value.trim();if(!t){alert("Donnez un titre à l'évaluation.");return}
-  if(ex.some(x=>!x.bareme)){alert("Chaque exercice doit avoir un barème.");return}
+  const fo=document.getElementById("e_ty").value==="formative";if(!fo&&ex.some(x=>!x.bareme)){alert("Chaque exercice doit avoir un barème.");return}
+  if(fo&&!ex.some(x=>x.comps.length)){alert("Évaluation formative : cochez au moins une compétence.");return}
   if(ex.some(x=>!x.comps.length)&&!confirm("Un exercice n'a aucune compétence cochée : il comptera dans la note mais ne fera avancer aucune compétence. Continuer ?"))return;
   e.titre=t;e.date=document.getElementById("e_d").value;e.type=document.getElementById("e_ty").value;e.seanceId=document.getElementById("e_s").value||null;e.remOf=document.getElementById("e_r").value||null;e.ex=ex;e.savoirs=S.getSav();
   if(e.isNew){delete e.isNew;D.evals.push(e)}save("Évaluation enregistrée");go("saisie",e.id)}}
@@ -569,7 +577,7 @@ function delEval(id,stay){const e=D.evals.find(x=>x.id===id);if(!e)return;const 
  if(!confirm("Supprimer définitivement l'évaluation « "+e.titre+" »"+(nNotes?" et les notes de "+nNotes+" apprenti(s)":"")+" ? Cette action est irréversible."))return;
  D.evals=D.evals.filter(x=>x.id!==id);D.evals.forEach(x=>{if(x.remOf===id)x.remOf=null});save("Évaluation supprimée");if(stay&&S.view!=="evaledit")render();else go("evals")}
 
-function vSaisie(g){const e=D.evals.find(x=>x.id===S.param);if(!e)return vEvals(g);let st=studentsOf(g);
+function vSaisie(g){const e=D.evals.find(x=>x.id===S.param);if(!e)return vEvals(g);if(isForm(e))return vSaisieForm(g,e);let st=studentsOf(g);
  if(e.remOf){const o=D.evals.find(x=>x.id===e.remOf);}
  const tot=e.ex.reduce((a,x)=>a+x.bareme,0);S.after=()=>bindSaisie(e);
  return `<div class="head"><div><h1>${h(e.titre)}</h1><div class="sub">${{diagnostique:"Diagnostique · non notée",formative:"Formative · non notée",sommative:"Sommative · compte dans la note"}[e.type]} · ${e.date?fdate(e.date):"sans date"} · total /${tot}</div></div>
@@ -581,6 +589,25 @@ function vSaisie(g){const e=D.evals.find(x=>x.id===S.param);if(!e)return vEvals(
  <td class="c" data-note>—</td><td class="c"><input type="checkbox" data-abs ${r.absent?"checked":""} style="width:auto"> ${r.absent?`<button class="btn s" data-dec>${r.abs?"Changer":"Décider"}</button>`:""}</td></tr>`}).join("")}</table></div>
  <div class="card" style="margin-top:14px"><div class="lbl">Analyse de l'évaluation</div><div id="ana"></div></div>
  ${(e.log||[]).length?`<details class="card"><summary class="lbl" style="cursor:pointer">Historique des corrections de notes (${e.log.length})</summary><table>${e.log.slice().reverse().map(l=>{const s=findStudent(l.sid);const x=e.ex.find(y=>y.id===l.ex);return `<tr><td>${new Date(l.t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</td><td>${s?stName(s):"?"}</td><td>${x?h(x.label):""}</td><td>${h(l.old)} → ${h(l.new)}</td></tr>`}).join("")}</table></details>`:""}`}
+function vSaisieForm(g,e){const st=studentsOf(g);const cs=evalComps(e);S.after=()=>bindSaisieForm(e);
+ const btns=(sid,c,r)=>Object.values(POS).map(o=>`<button class="pb ${o.c} ${r.pos&&r.pos[c]===o.c?"on":""}" data-s="${sid}" data-c="${c}" data-v="${o.c}" title="${o.l}" ${r.absent?"disabled":""}>${o.c}</button>`).join("");
+ const ana=cs.map(c=>{const n={A:0,ECA:0,NA:0};let t=0;st.forEach(s=>{const r=(e.res||{})[s.id];if(!r||r.absent||!r.pos||!r.pos[c])return;n[r.pos[c]]++;t++});
+  return `<div class="row" style="justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span><b>${keyLabel(c)}</b> ${h(compName(c,g))}</span><span>${t?`<span class="pill s3">A ${n.A}</span> <span class="pill s2">ECA ${n.ECA}</span> <span class="pill sNA">NA ${n.NA}</span> ${(n.NA+n.ECA)/t>.5?'<span class="pill s2">⚠ à retravailler</span>':""}`:'<span class="hint">rien de saisi</span>'}</span></div>`}).join("");
+ return `<div class="head"><div><h1>${h(e.titre)}</h1><div class="sub">Formative · sans points · ${e.date?fdate(e.date):"sans date"} · ${cs.length} compétence(s)</div></div>
+ <div class="row"><button class="btn ${e.statut==="faite"?"n":""}" onclick="setStatut('${e.id}','faite')">${STATE_ICO[2]} Faite · à corriger</button><button class="btn ${e.statut==="corrigee"?"g":""}" onclick="setStatut('${e.id}','corrigee')">${STATE_ICO[3]} Corrigée</button></div></div>
+ <div class="consigne">Pour chaque apprenti et chaque compétence, touchez <b>A</b> (acquis), <b>ECA</b> (en cours d'acquisition) ou <b>NA</b> (non acquis). Touchez à nouveau pour effacer. Pas de points ni de note. Un jeune absent : cochez « Absent », puis choisissez <b>Reporter</b> ou <b>Annuler</b>.</div>
+ ${cs.length?`<div class="tw"><table><tr><th>Apprenti</th>${cs.map(c=>`<th class="c" title="${h(compName(c,g))}">${keyLabel(c)}<br><span style="text-transform:none;font-weight:400">${h(compName(c,g).length>28?compName(c,g).slice(0,28)+"…":compName(c,g))}</span></th>`).join("")}<th class="c">Absent</th></tr>
+ ${st.map(s=>{const r=(e.res||{})[s.id]||{};return `<tr data-s="${s.id}"><td>${stName(s)}${r.absent&&r.abs?`<div class="hint">${r.abs==="annule"?"Évaluation annulée":r.abs==="remed"?"Reportée à la remédiation":"Reportée au stage "+h(r.reportStage)}</div>`:""}</td>${cs.map(c=>`<td class="c" style="white-space:nowrap">${btns(s.id,c,r)}</td>`).join("")}
+ <td class="c"><input type="checkbox" data-abs ${r.absent?"checked":""} style="width:auto"> ${r.absent?`<button class="btn s" data-dec>${r.abs?"Changer":"Décider"}</button>`:""}</td></tr>`}).join("")}</table></div>`:'<div class="card empty">Aucune compétence cochée dans cette évaluation : modifiez-la (✎) pour en cocher.</div>'}
+ <div class="card" style="margin-top:14px"><div class="lbl">Analyse de l'évaluation</div>${ana||'<div class="empty">—</div>'}</div>
+ ${(e.log||[]).length?`<details class="card"><summary class="lbl" style="cursor:pointer">Historique des corrections (${e.log.length})</summary><table>${e.log.slice().reverse().map(l=>{const s=findStudent(l.sid);return `<tr><td>${new Date(l.t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</td><td>${s?stName(s):"?"}</td><td>${h(keyLabel(l.ex))}</td><td>${h(l.old)} → ${h(l.new)}</td></tr>`}).join("")}</table></details>`:""}`}
+function bindSaisieForm(e){e.res=e.res||{};
+ document.querySelectorAll(".pb").forEach(b=>b.onclick=()=>{const sid=b.dataset.s,c=b.dataset.c,v=b.dataset.v;const r=e.res[sid]=e.res[sid]||{};r.pos=r.pos||{};const old=r.pos[c];
+  if(old===v)delete r.pos[c];else r.pos[c]=v;
+  if(old&&e.statut==="corrigee"){e.log=e.log||[];e.log.push({t:Date.now(),sid,ex:c,old,new:r.pos[c]||"(vide)"})}
+  if(e.statut==="a_faire")e.statut="faite";save();const y=window.scrollY;render();window.scrollTo(0,y)});
+ document.querySelectorAll("tr[data-s]").forEach(tr=>{const sid=tr.dataset.s;const a=tr.querySelector("[data-abs]");if(a)a.addEventListener("change",ev=>{const r=e.res[sid]=e.res[sid]||{};r.absent=ev.target.checked;if(!r.absent){delete r.abs;delete r.reportStage}if(e.statut==="a_faire")e.statut="faite";save();render();if(r.absent)decide(e,sid)});
+  const d=tr.querySelector("[data-dec]");if(d)d.onclick=()=>decide(e,sid)})}
 function setStatut(id,s){const e=D.evals.find(x=>x.id===id);e.statut=s;if(!e.date)e.date=today();save(s==="corrigee"?"Évaluation corrigée : compétences mises à jour":"Évaluation marquée « faite »");render()}
 function bindSaisie(e){const tab=document.getElementById("stab");e.res=e.res||{};
  const upd=tr=>{const sid=tr.dataset.s;const p=evalStudentPct(e,sid);tr.querySelector("[data-note]").textContent=p?(Math.round(p.note20*10)/10).toString().replace(".",","):"—"};
@@ -626,9 +653,9 @@ function vEleve(g){const s=findStudent(S.param);if(!s)return vGroupe(g);const c=
  ${(()=>{const sv=savStates(s);const l=Object.values(sv);if(!l.length)return "";const vus=l.filter(x=>x.vu),aR=l.filter(x=>!x.vu&&x.manque.length);
   return `<div class="card"><div class="lbl">Savoirs associés vus · ${vus.length} / ${l.length}</div>${vus.length?`<table><tr><th>Savoir associé</th><th>Vu le</th><th class="c">Évaluations</th></tr>${vus.map(x=>`<tr><td><b>${x.code}</b> ${h(x.nom)}</td><td>${fdate(x.vu)}</td><td class="c">${x.eval||"—"}</td></tr>`).join("")}</table>`:'<div class="empty">Aucun savoir associé vu pour l\'instant.</div>'}
   ${aR.length?`<div class="hint" style="margin-top:8px">⚠ À rattraper (absent) : ${aR.map(x=>x.code+" ("+x.manque.map(seanceCode).join(", ")+")").join(" · ")}</div>`:""}</div>`})()}
- <div class="card"><div class="lbl">Évaluations (datées)</div><table><tr><th>Date</th><th>Évaluation</th><th>Type</th><th class="c">Note /20</th><th>Remarque</th></tr>
+ <div class="card"><div class="lbl">Évaluations (datées)</div><table><tr><th>Date</th><th>Évaluation</th><th>Type</th><th class="c">Résultat</th><th>Remarque</th></tr>
  ${evs.map(e=>{const r=(e.res||{})[s.id];const x=evalStudentPct(e,s.id);const grp=G(e.gid);let rem="";if(r&&r.absent)rem=r.abs==="annule"?"annulée (absent)":r.abs==="remed"?"absent · reportée à la remédiation":r.abs==="stage"?"absent · reportée au stage "+r.reportStage:"absent · à décider";if(e.statut!=="corrigee"&&!rem)rem=e.statut==="faite"?"pas encore corrigée":"à venir";
-  return `<tr><td>${fdate(e.date)}</td><td>${h(e.titre)}${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${grp.kind==="division"?"Division":"Section"}</div></td><td>${e.type}</td><td class="c">${x&&e.type==="sommative"?(Math.round(x.note20*10)/10).toString().replace(".",","):x?pct(x.note20/20)+" %":"—"}</td><td class="hint">${rem}</td></tr>`}).join("")||'<tr><td colspan="5" class="empty">Aucune évaluation.</td></tr>'}</table></div>
+  return `<tr><td>${fdate(e.date)}</td><td>${h(e.titre)}${e.remOf?' <span class="tag">remédiation</span>':""}<div class="hint">${grp.kind==="division"?"Division":"Section"}</div></td><td>${e.type}</td><td class="c">${isForm(e)&&r&&r.pos&&!r.absent?posSummary(r):x&&e.type==="sommative"?(Math.round(x.note20*10)/10).toString().replace(".",","):x?pct(x.note20/20)+" %":"—"}</td><td class="hint">${rem}</td></tr>`}).join("")||'<tr><td colspan="5" class="empty">Aucune évaluation.</td></tr>'}</table></div>
  <div class="card"><div class="lbl">Absences aux séances</div>${absS.length?absS.map(x=>`<span class="tag">${seanceCode(x)} · ${fdate(x.done.date)}</span>`).join(""):'<div class="empty">Aucune absence enregistrée.</div>'}</div>`}
 function editStudent(id){const g=D.groups.find(x=>(x.students||[]).some(s=>s.id===id));const s=g.students.find(x=>x.id===id);
  modal(`<h2>Modifier l'apprenti</h2><label class="f">Nom</label><input type="text" id="n" value="${h(s.nom)}"><label class="f">Prénom</label><input type="text" id="p" value="${h(s.prenom)}">
@@ -764,7 +791,7 @@ function loadDemo(){if(D.groups.some(g=>g.demo)&&!confirm("Un groupe de démonst
  const rnd=(a,b)=>Math.round((a+Math.random()*(b-a))*2)/2;
  const lvl=[.85,.45,.6,.9,.75,.7,.55,.95];
  const mkE=(g,seance,titre,type,ex,stg,statut)=>{const e={id:uid(),gid:g.id,seanceId:seance.id,titre,type,date:cal[stg-1].debut,statut,ex:ex.map(([l,b,c])=>({id:uid(),label:l,bareme:b,comps:c})),res:{},log:[]};
-  if(statut!=="a_faire")sec_.students.forEach((s,i)=>{if(statut==="faite"&&i>2)return;const r={sc:{}};e.ex.forEach(x=>{r.sc[x.id]=Math.max(0,Math.min(x.bareme,rnd(x.bareme*(lvl[i]-.2),x.bareme*(lvl[i]+.15))))});e.res[s.id]=r});D.evals.push(e);return e};
+  if(statut!=="a_faire")sec_.students.forEach((s,i)=>{if(statut==="faite"&&i>2)return;if(type==="formative"){const r={pos:{}};evalComps(e).forEach(c=>{const x=lvl[i]+rnd(-.15,.15);r.pos[c]=x>=.75?"A":x>=.5?"ECA":"NA"});e.res[s.id]=r;return}const r={sc:{}};e.ex.forEach(x=>{r.sc[x.id]=Math.max(0,Math.min(x.bareme,rnd(x.bareme*(lvl[i]-.2),x.bareme*(lvl[i]+.15))))});e.res[s.id]=r});D.evals.push(e);return e};
  mkE(div,DS[1],"Test de positionnement","diagnostique",[["Lire un plan",10,["C2.1"]],["Repérer les pièces",10,["C2.1"]]],1,"corrigee");
  mkE(div,DS[2],"Les intervenants","formative",[["Associer les intervenants",6,["C1.1"]],["Expliquer son rôle",4,["C1.2"]]],2,"corrigee");
  mkE(sec_,SS[3],"Relevé d'une installation","sommative",[["Lire le plan de plomberie",6,["C2.1"]],["Choisir les outils de mesure",4,["C2.1","C2.2"]],["Compléter la fiche de relevé",10,["C1.1"]]],3,"corrigee");
